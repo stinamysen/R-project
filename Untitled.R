@@ -4,6 +4,7 @@ library(jsonlite)
 library(data.table)
 library(bit64)
 library(docstring) #HUSK Å BRUKE DENNE TIL Å FORKLARE FEKS EN FUNKSJON
+library(tidyverse)
 
 #----------------------------------------------------------------------------------------------------------------------
 
@@ -13,3 +14,11 @@ products <- fread('https://www.vinmonopolet.no/medias/sys_master/products/produc
 head(products)
 is.data.frame(products)
 
+
+
+
+products %>% 
+  select(-HovedGTIN,-Miljosmart_emballasje, -Gluten_lav_pa, -AndreGTINs) %>% 
+  filter(Alkohol!="0,00") %>% 
+  head
+ 
