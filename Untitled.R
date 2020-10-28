@@ -22,3 +22,5 @@ products %>%
   filter(Alkohol!="0,00") %>% 
   head
  
+#Dette er til tull- branchen
+
