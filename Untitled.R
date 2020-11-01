@@ -22,4 +22,5 @@ products %>%
   select(-HovedGTIN,-Miljosmart_emballasje, -Gluten_lav_pa, -AndreGTINs) %>% 
   filter(Alkohol!="0,00") %>% 
   head
+  
  
