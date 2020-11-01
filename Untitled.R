@@ -5,6 +5,7 @@ library(data.table)
 library(bit64)
 library(docstring) #HUSK Å BRUKE DENNE TIL Å FORKLARE FEKS EN FUNKSJON
 library(tidyverse)
+library(anytime) #for å få tiden i et finere format
 
 #----------------------------------------------------------------------------------------------------------------------
 
