@@ -8,6 +8,7 @@ library(tidyverse)
 library(dplyr) #rename
 library(shiny)#filter name function
 library(stringr)
+library(anytime)
 #----------------------------------------------------------------------------------------------------------------------
 #Since the data at vinmonopolet is changing everyday, we use the data.table library and the fread()-function 
  #found this from https://www.r-bloggers.com/2015/03/getting-data-from-an-online-source/
@@ -18,7 +19,7 @@ is.data.frame(produkter)
 products <- produkter %>% 
   select(-HovedGTIN,-Miljosmart_emballasje, -Gluten_lav_pa, -AndreGTINs) %>% 
   filter(Alkohol!="0,00") %>%
-  unite('Passertil', Passertil01,Passertil02,Passertil03, sep = " ", remove=T ) #Legger sammen passertil kolonnene
+  unite('Passertil', Passertil01,Passertil02,Passertil03, sep = " ", remove=T )#Legger sammen passertil kolonnene
 
 
 choose_name <- function(){
