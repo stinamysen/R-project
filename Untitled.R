@@ -20,7 +20,7 @@ products <- produkter %>%
   select(-HovedGTIN,-Miljosmart_emballasje, -Gluten_lav_pa, -AndreGTINs) %>% 
   filter(Alkohol!="0,00") %>%
   unite('Passertil', Passertil01,Passertil02,Passertil03, sep = " ", remove=T ) %>% #Legger sammen passertil kolonnene
-  mutate(Datotid= anytime(Datotid))
+  mutate(Datotid= anytime(Datotid))   #for å få finere tid-format
 
 
 choose_name <- function(){
