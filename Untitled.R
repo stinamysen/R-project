@@ -22,7 +22,6 @@ products <- produkter %>%
   unite('Passertil', Passertil01,Passertil02,Passertil03, sep = " ", remove=T ) %>% #Legger sammen passertil kolonnene
   mutate(Datotid= anytime(Datotid))
 
-#yes
 
 choose_name <- function(){
   name <- readline(prompt = "Choose the name of the liquor you want (press enter if you don't want to filtrate on name): ")
