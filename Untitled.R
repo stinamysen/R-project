@@ -19,9 +19,9 @@ is.data.frame(produkter)
 products <- produkter %>% 
   select(-HovedGTIN,-Miljosmart_emballasje, -Gluten_lav_pa, -AndreGTINs) %>% 
   filter(Alkohol!="0,00") %>%
-  unite('Passertil', Passertil01,Passertil02,Passertil03, sep = " ", remove=T )#Legger sammen passertil kolonnene
+  unite('Passertil', Passertil01,Passertil02,Passertil03, sep = " ", remove=T ) %>% #Legger sammen passertil kolonnene
+  mutate(Datotid= anytime(Datotid))
 
-#HVA SKJER?
 choose_name <- function(){
   name <- readline(prompt = "Choose the name of the liquor you want (press enter if you don't want to filtrate on name): ")
   #Make it case insensitive:
