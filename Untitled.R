@@ -8,7 +8,7 @@ library(tidyverse)
 library(dplyr) #rename
 library(shiny)#filter name function
 library(stringr)
-library(anytime)
+library(anytime) #endre tid
 #----------------------------------------------------------------------------------------------------------------------
 #Since the data at vinmonopolet is changing everyday, we use the data.table library and the fread()-function 
  #found this from https://www.r-bloggers.com/2015/03/getting-data-from-an-online-source/
@@ -19,14 +19,19 @@ is.data.frame(produkter)
 products <- produkter %>% 
   select(-HovedGTIN,-Miljosmart_emballasje, -Gluten_lav_pa, -AndreGTINs) %>% 
   filter(Alkohol!="0,00") %>%
-  unite('Passertil', Passertil01,Passertil02,Passertil03, sep = " ", remove=T ) %>% #Legger sammen passertil kolonnene
-  mutate(Datotid= anytime(Datotid))   #for å få finere tid-format
+  unite('Passertil', Passertil01,Passertil02,Passertil03, sep = " ", remove=F ) %>% #Legger sammen passertil kolonnene
+  mutate(Datotid= anytime(Datotid)) %>% #for å få finere tid-format
+  mutate(Pris= as.numeric(gsub(",",".",Pris))) %>%  #changing the separator , to . and making numeric
+  mutate(Varenavn=strsplit(Varenavn," " )) #for at man kan søke på kun en del av varenavnet
 
+
+#products$Pris <- as.numeric(gsub(",",".",products$Pris)) #changing the separator , to . and making numeric
 
 choose_name <- function(){
   name <- readline(prompt = "Choose the name of the liquor you want (press enter if you don't want to filtrate on name): ")
   #Make it case insensitive:
-  name <- tolower(name)
+  name <- strsplit(tolower(name), " ")
+  
   Varenavn <- tolower(products$Varenavn)
   
   if (name %in% Varenavn){
@@ -35,15 +40,27 @@ choose_name <- function(){
     names(tabell) <- substring(names(tabell),5) #removing the "rad." part of every colname
     print(paste("We found: ", nrow(tabell), "liquor(s) matching your input."))
     return(tabell)
-}
-
+  }
+ # else if (all(name %in% Varenavn)){
+    rad <- products[grep(name, products$Varenavn, ignore.case = T, value = F), ]
+    tabell <- data.frame(rad$Varenavn) 
+    names(tabell) <- substring(names(tabell),5) 
+    print(paste("Did you mean any of these",nrow(tabell),"products?"))
+  #}
   else {
     print("No such liquor name in Vinmonopolets storage, please try again: ")
     return(choose_name())
   }
 }
-
 choose_name()
+
+name <- readline(prompt = "Choose the name of the liquor you want (press enter if you don't want to filtrate on name): ")
+#Make it case insensitive:
+name <- strsplit(tolower(name), " ")
+Varenavn <- tolower(products$Varenavn)
+check<-(all(name %in% Varenavn))
+  
+
 
 #Må gjøres med funksjonen:
 #- kunne trykke enter for å hoppe videre til annen input --> gjøres vell i hovedfunksjonen?
@@ -52,7 +69,7 @@ choose_name()
 #Funksjon for pris
 
 #Lager min- og makspris for å gi brukeren et interval for pris
-products$Pris <- as.numeric(gsub(",",".",products$Pris)) #changing the separator , to . and making numeric
+
 min_price <- round(min(products$Pris))#rounded minimum price 
 max_price <- round(max(products$Pris))#rounded maximum price
 
@@ -65,7 +82,8 @@ choose_price <- function(){
     p_max_enquo = enquo(pris_max)
     p_min_enquo = enquo(pris_min) #får den under til å funke, men aner faen ikke hvorfor - this took me 6 hours :) 
     rad <- products %>% filter(Pris <= (!!p_max_enquo) && Pris >= (!!p_min_enquo))
-    tabell <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
+    tabell <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl) #kanskje gjøre innholdet i denne dataframen til en listen
+                                                                                                      #slik at man slipper å skrive dette inn for hver funksjon
     names(tabell) <- substring(names(tabell),5)
     print(paste("We found: ", nrow(rad), "liquor(s) matching your input."))
     return(tabell)
