@@ -22,39 +22,27 @@ products <- produkter %>%
   unite('Passertil', Passertil01,Passertil02,Passertil03, sep = " ", remove=F ) %>% #Legger sammen passertil kolonnene
   mutate(Datotid= anytime(Datotid)) %>% #for å få finere tid-format
   mutate(Pris= as.numeric(gsub(",",".",Pris)))# %>%  #changing the separator , to . and making numeric
- 
-# FORELØPIG SKAL DENNE FJERNES
-#mutate(Varenavn=strsplit(Varenavn," " )) #for at man kan søke på kun en del av varenavnet
 
 
-#products$Pris <- as.numeric(gsub(",",".",products$Pris)) #changing the separator , to . and making numeric
-
-choose_name <- function(){
+choose_name <-function(){
   name <- readline(prompt = "Choose the name of the liquor you want (press enter if you don't want to filtrate on name): ")
-  #Make it case insensitive:
-  #name <- strsplit(tolower(name), " ")
   name <- tolower(name)
-  Varenavn <- tolower(products$Varenavn)
-  
-  if (name %in% Varenavn){
-    rad <- products[grep(name, products$Varenavn, ignore.case = T, value = F), ]
+  Varenavn <- tolower(products$Varenavn) 
+  rad <- products[grep(name, products$Varenavn, ignore.case = T, value = F), ]
+  if (nrow(rad)!=0){
     tabell <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
     names(tabell) <- substring(names(tabell),5) #removing the "rad." part of every colname
     print(paste("We found: ", nrow(tabell), "liquor(s) matching your input."))
     return(tabell)
   }
- # else if (all(name %in% Varenavn)){
-    #rad <- products[grep(name, products$Varenavn, ignore.case = T, value = F), ]
-   # tabell <- data.frame(rad$Varenavn) 
-   # names(tabell) <- substring(names(tabell),5) 
-   # print(paste("Did you mean any of these",nrow(tabell),"products?"))
-  #}
+  
   else {
     print("No such liquor name in Vinmonopolets storage, please try again: ")
     return(choose_name())
   }
 }
 choose_name()
+
 
 name <- readline(prompt = "Choose the name of the liquor you want (press enter if you don't want to filtrate on name): ")
 #Make it case insensitive:
@@ -99,25 +87,24 @@ choose_price()
 
 
 #Funksjon for varetype, veldig lik funksjonen for navn
-choose_type <- function(){
-  type <- readline(prompt = "Choose the type of the liquor you want: ")
-  #Make it case insensitive:
-  type <- tolower(type)
-  Varetype <- tolower(products$Varetype)
+choose_name <-function(){
+  name <- readline(prompt = "Choose the name of the liquor you want (press enter if you don't want to filtrate on name): ")
+  name <- tolower(name)
+  Varenavn <- tolower(products$Varenavn) 
+  rad <- products[grep(name, products$Varenavn, ignore.case = T, value = F), ]
+  if (nrow(rad)!=0){
+    tabell <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
+    names(tabell) <- substring(names(tabell),5) #removing the "rad." part of every colname
+    print(paste("We found: ", nrow(tabell), "liquor(s) matching your input."))
+    return(tabell)
+  }
   
-  if (type %in% Varetype){
-    rad <- products[grep(type, products$Varetype,ignore.case = TRUE, value = F), ]
-    tabell_type <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil,rad$Vareurl)
-    names(tabell_type) <- substring(names(tabell_type),5)
-    print(paste("We found ", nrow(tabell_type), " liquors"))
-    return (tabell_type)
-  } 
   else {
     print("No such liquor name in Vinmonopolets storage, please try again: ")
-    return(choose_type())
+    return(choose_name())
   }
 }
-choose_type()
+choose_name()
 
 #Funksjon for hvilket land
 choose_country <- function(){
@@ -149,8 +136,8 @@ choose_fits <- function(){
   #Make it case insensitive:
   fits <- tolower(fits)
   passertil <- tolower(products$Passertil)
-  
-  if (fits %in% passertil){
+  rad <- products[grep(fits, products$Passertil, ignore.case = TRUE, value = F), ]
+  if (nrow(rad)!=0){
     rad <- products[grep(fits, products$Passertil, ignore.case = TRUE, value = F), ]
     tabell_fits <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil,rad$Vareurl)
     names(tabell_fits) <- substring(names(tabell_fits),5)
@@ -166,10 +153,7 @@ choose_fits <- function(){
 choose_fits()
 
 #Må gjøres: 
-#Få NA i "passertil" til å ikke være "''".
-#Får den ikke til å komme frem til riktig, tror det kan ha noe å gjøre med hvordan man søker - siden man skal kun 
-#finne de radene som inneholder et ord - ikke nødvendigvis alle ordene som er i kolonnen. 
-
+#nå funker det ku
 
 full_function <- function(){
   name <- choose_name()
