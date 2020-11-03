@@ -29,7 +29,7 @@ choose_name <-function(){
   name <- tolower(name)
   Varenavn <- tolower(products$Varenavn) 
   rad <- products[grep(name, products$Varenavn, ignore.case = T, value = F), ]# et datasett hvor inputen og datasettet matcher
-  if (nrow(rad)>0){   #hvis rad-datasettet har en innhold, altså antall rader større enn 1
+  if (nrow(rad)>0){   #hvis rad-datasettet har et innhold, altså antall rader større enn 0
     tabell <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
     names(tabell) <- substring(names(tabell),5) #removing the "rad." part of every colname
     print(paste("We found: ", nrow(tabell), "liquor(s) matching your input."))
