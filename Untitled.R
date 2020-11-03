@@ -28,8 +28,8 @@ choose_name <-function(){
   name <- readline(prompt = "Choose the name of the liquor you want (press enter if you don't want to filtrate on name): ")
   name <- tolower(name)
   Varenavn <- tolower(products$Varenavn) 
-  rad <- products[grep(name, products$Varenavn, ignore.case = T, value = F), ]
-  if (nrow(rad)!=0){
+  rad <- products[grep(name, products$Varenavn, ignore.case = T, value = F), ]# et datasett hvor inputen og datasettet matcher
+  if (nrow(rad)>0){   #hvis rad-datasettet har en innhold, altså antall rader større enn 1
     tabell <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
     names(tabell) <- substring(names(tabell),5) #removing the "rad." part of every colname
     print(paste("We found: ", nrow(tabell), "liquor(s) matching your input."))
@@ -42,7 +42,6 @@ choose_name <-function(){
   }
 }
 choose_name()
-
 
 name <- readline(prompt = "Choose the name of the liquor you want (press enter if you don't want to filtrate on name): ")
 #Make it case insensitive:
@@ -87,24 +86,25 @@ choose_price()
 
 
 #Funksjon for varetype, veldig lik funksjonen for navn
-choose_name <-function(){
-  name <- readline(prompt = "Choose the name of the liquor you want (press enter if you don't want to filtrate on name): ")
-  name <- tolower(name)
-  Varenavn <- tolower(products$Varenavn) 
-  rad <- products[grep(name, products$Varenavn, ignore.case = T, value = F), ]
+choose_type <- function(){
+  type <- readline(prompt = "Choose the type of the liquor you want: ")
+  #Make it case insensitive:
+  type <- tolower(type)
+  Varetype <- tolower(products$Varetype)
+  rad <- products[grep(type, products$Varetype,ignore.case = TRUE, value = F), ]
   if (nrow(rad)!=0){
-    tabell <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
-    names(tabell) <- substring(names(tabell),5) #removing the "rad." part of every colname
-    print(paste("We found: ", nrow(tabell), "liquor(s) matching your input."))
-    return(tabell)
-  }
-  
+    rad <- products[grep(type, products$Varetype,ignore.case = TRUE, value = F), ]
+    tabell_type <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil,rad$Vareurl)
+    names(tabell_type) <- substring(names(tabell_type),5)
+    print(paste("We found ", nrow(tabell_type), " liquors"))
+    return (tabell_type)
+  } 
   else {
     print("No such liquor name in Vinmonopolets storage, please try again: ")
-    return(choose_name())
+    return(choose_type())
   }
 }
-choose_name()
+choose_type()
 
 #Funksjon for hvilket land
 choose_country <- function(){
@@ -134,10 +134,9 @@ choose_country()
 choose_fits <- function(){
   fits <- readline(prompt = "What do you want the liqour to fit well with: ")
   #Make it case insensitive:
-  fits <- tolower(fits)
-  passertil <- tolower(products$Passertil)
+  fits <- strsplit(tolower(fits), ",")
+  passertil <- strsplit(tolower(products$Passertil)," ")
   rad <- products[grep(fits, products$Passertil, ignore.case = TRUE, value = F), ]
-  if (nrow(rad)!=0){
     rad <- products[grep(fits, products$Passertil, ignore.case = TRUE, value = F), ]
     tabell_fits <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil,rad$Vareurl)
     names(tabell_fits) <- substring(names(tabell_fits),5)
@@ -152,8 +151,7 @@ choose_fits <- function(){
 }
 choose_fits()
 
-#Må gjøres: 
-#nå funker det ku
+
 
 full_function <- function(){
   name <- choose_name()
@@ -185,3 +183,12 @@ tabell <- products[grep(type, products$Varetype, value = F), ]
 #her plukker vi ut de som har lik passeril01 som det brukeren tastet inn
 tabell2 <- products[grep(passer_til, products$Passertil01, value = F), ]
 
+
+#MÅ GJØRES VIDERE
+
+#choose_fits()- funksjonen, egt også choose_name function : 
+# gjøre det sånn at rekkefølgen på inputen fra brukeren ikke har noe å si på hva outputen blir
+#Dette kan kanskje gjøres med en if?
+#if inputen til brukeren er større en lengde=1 kan man da kjøre en loop der man filterer først for den ene stringen i inputen, så den andre, så den tredje
+#osv, for å så finne de radene som gjelder. Vet ikke hvor lett dette er, mulig vi kan spørre studass  om det,
+#men det gjør hvertfall kvaliteten enda bedre.
