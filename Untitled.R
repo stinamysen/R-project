@@ -21,8 +21,10 @@ products <- produkter %>%
   filter(Alkohol!="0,00") %>%
   unite('Passertil', Passertil01,Passertil02,Passertil03, sep = " ", remove=F ) %>% #Legger sammen passertil kolonnene
   mutate(Datotid= anytime(Datotid)) %>% #for å få finere tid-format
-  mutate(Pris= as.numeric(gsub(",",".",Pris))) %>%  #changing the separator , to . and making numeric
-  mutate(Varenavn=strsplit(Varenavn," " )) #for at man kan søke på kun en del av varenavnet
+  mutate(Pris= as.numeric(gsub(",",".",Pris)))# %>%  #changing the separator , to . and making numeric
+ 
+# FORELØPIG SKAL DENNE FJERNES
+#mutate(Varenavn=strsplit(Varenavn," " )) #for at man kan søke på kun en del av varenavnet
 
 
 #products$Pris <- as.numeric(gsub(",",".",products$Pris)) #changing the separator , to . and making numeric
@@ -30,8 +32,8 @@ products <- produkter %>%
 choose_name <- function(){
   name <- readline(prompt = "Choose the name of the liquor you want (press enter if you don't want to filtrate on name): ")
   #Make it case insensitive:
-  name <- strsplit(tolower(name), " ")
-  
+  #name <- strsplit(tolower(name), " ")
+  name <- tolower(name)
   Varenavn <- tolower(products$Varenavn)
   
   if (name %in% Varenavn){
@@ -42,10 +44,10 @@ choose_name <- function(){
     return(tabell)
   }
  # else if (all(name %in% Varenavn)){
-    rad <- products[grep(name, products$Varenavn, ignore.case = T, value = F), ]
-    tabell <- data.frame(rad$Varenavn) 
-    names(tabell) <- substring(names(tabell),5) 
-    print(paste("Did you mean any of these",nrow(tabell),"products?"))
+    #rad <- products[grep(name, products$Varenavn, ignore.case = T, value = F), ]
+   # tabell <- data.frame(rad$Varenavn) 
+   # names(tabell) <- substring(names(tabell),5) 
+   # print(paste("Did you mean any of these",nrow(tabell),"products?"))
   #}
   else {
     print("No such liquor name in Vinmonopolets storage, please try again: ")
