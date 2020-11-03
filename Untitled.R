@@ -5,9 +5,14 @@ library(data.table)
 library(bit64)
 library(docstring) #HUSK Å BRUKE DENNE TIL Å FORKLARE FEKS EN FUNKSJON
 library(tidyverse)
+<<<<<<< HEAD
 library(dplyr) #rename
 library(shiny)#filter name function
 library(stringr)
+=======
+library(anytime) #for å få tiden i et finere format
+
+>>>>>>> b4cdc8f6117289f136b8d1f36966bf7a99ab1ba0
 #----------------------------------------------------------------------------------------------------------------------
 #Since the data at vinmonopolet is changing everyday, we use the data.table library and the fread()-function 
  #found this from https://www.r-bloggers.com/2015/03/getting-data-from-an-online-source/
@@ -181,3 +186,12 @@ tabell <- products[grep(type, products$Varetype, value = F), ]
 #her plukker vi ut de som har lik passeril01 som det brukeren tastet inn
 tabell2 <- products[grep(passer_til, products$Passertil01, value = F), ]
 
+<<<<<<< HEAD
+=======
+products %>% 
+  select(-HovedGTIN,-Miljosmart_emballasje, -Gluten_lav_pa, -AndreGTINs) %>% 
+  filter(Alkohol!="0,00") %>% 
+  head
+  
+ 
+>>>>>>> b4cdc8f6117289f136b8d1f36966bf7a99ab1ba0
