@@ -11,7 +11,7 @@ library(stringr)
 library(anytime) #endre tid
 #----------------------------------------------------------------------------------------------------------------------
 #Since the data at vinmonopolet is changing everyday, we use the data.table library and the fread()-function 
- #found this from https://www.r-bloggers.com/2015/03/getting-data-from-an-online-source/
+#found this from https://www.r-bloggers.com/2015/03/getting-data-from-an-online-source/
 produkter <- fread('https://www.vinmonopolet.no/medias/sys_master/products/products/hbc/hb0/8834253127710/produkter.csv')
 is.data.frame(produkter)
 
@@ -19,7 +19,8 @@ is.data.frame(produkter)
 products <- produkter %>% 
   select(-HovedGTIN,-Miljosmart_emballasje, -Gluten_lav_pa, -AndreGTINs) %>% 
   filter(Alkohol!="0,00") %>%
-  unite('Passertil', Passertil01,Passertil02,Passertil03, sep = " ", remove=F ) %>% #Legger sammen passertil kolonnene
+  unite('Passertil', Passertil01,Passertil02,Passertil03, sep = " ", remove=T ) %>% #Legger sammen passertil kolonnene
+  mutate(Passertil = gsub(",", "", (gsub("og", "", Passertil)))) %>% #Fjerner "og" 
   mutate(Datotid= anytime(Datotid)) %>% #for å få finere tid-format
   mutate(Pris= as.numeric(gsub(",",".",Pris)))# %>%  #changing the separator , to . and making numeric
 
@@ -130,26 +131,45 @@ choose_country()
 
 
 
-#Funksjon for hva den skal passe til
 choose_fits <- function(){
   fits <- readline(prompt = "What do you want the liqour to fit well with: ")
   #Make it case insensitive:
-  fits <- strsplit(tolower(fits), ",")
-  passertil <- strsplit(tolower(products$Passertil)," ")
-  rad <- products[grep(fits, products$Passertil, ignore.case = TRUE, value = F), ]
-    rad <- products[grep(fits, products$Passertil, ignore.case = TRUE, value = F), ]
-    tabell_fits <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil,rad$Vareurl)
-    names(tabell_fits) <- substring(names(tabell_fits),5)
-    print(paste("We found ", nrow(rad), " liquors"))
-    return (tabell_fits)
-  } 
+  fits <- tolower(as.list(scan(text=fits, what = ""))) #Småbokstaver og lager til liste
   
-  else {
-    print("No liquor in Vinmonopolets storage fits with that, please try again: ")
-    return(choose_fits())
+  fits <- fits[fits != "og"]  #fjerner ordene som ikke skal med:
+  fits <- fits[fits != "and"] #fjerner ordene som ikke skal med:
+  
+  passertil <- tolower(products$Passertil)
+  
+  rad <- products[grep(fits[1], products$Passertil,ignore.case = TRUE, value = F), ]
+  
+  #bruker for loop for at det skal filtreres for alle ordene brukeren har skrevet inn 
+  for (i in 1:length(fits)){
+    rad <- rad[grep(fits[i], rad$Passertil,ignore.case = TRUE, value = F), ]
   }
+    
+  #Lager en dataramme av det ferdig filtrerte "rad"
+  tabell_fits <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil,rad$Vareurl)
+  names(tabell_fits) <- substring(names(tabell_fits),5)
+    
+  #hvis det er rader igjen etter filtreringen: 
+  if (nrow(rad) != 0){
+    print(paste("We found: ", nrow(rad), "liquor(s) matching your input."))
+    return (tabell_fits)
+  }
+    
+  else{
+    print(paste("We couldn't find any liquor that is good with those dishes. Please try again: "))
+    return (choose_fits())
+  }
+  
 }
+
 choose_fits()
+
+
+
+
 
 
 
@@ -182,13 +202,3 @@ passer_til <- navn$Passertil01
 tabell <- products[grep(type, products$Varetype, value = F), ]
 #her plukker vi ut de som har lik passeril01 som det brukeren tastet inn
 tabell2 <- products[grep(passer_til, products$Passertil01, value = F), ]
-
-
-#MÅ GJØRES VIDERE
-
-#choose_fits()- funksjonen, egt også choose_name function : 
-# gjøre det sånn at rekkefølgen på inputen fra brukeren ikke har noe å si på hva outputen blir
-#Dette kan kanskje gjøres med en if?
-#if inputen til brukeren er større en lengde=1 kan man da kjøre en loop der man filterer først for den ene stringen i inputen, så den andre, så den tredje
-#osv, for å så finne de radene som gjelder. Vet ikke hvor lett dette er, mulig vi kan spørre studass  om det,
-#men det gjør hvertfall kvaliteten enda bedre.
