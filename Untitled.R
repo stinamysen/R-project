@@ -23,227 +23,230 @@ products <- produkter %>%
   mutate(Datotid= anytime(Datotid)) %>% #for å få finere tid-format
   mutate(Pris= as.numeric(gsub(",",".",Pris)))# %>%  #changing the separator , to . and making numeric
 
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-choose_name <-function(){
-  name <- readline(prompt = "Choose the name of the liquor you want (press enter if you don't want to filtrate on name): ")
+#NAME FUNKSJON 
+choose_name <-function(name, tabell){
   name <- tolower(name)
-  Varenavn <- tolower(products$Varenavn) 
-  rad <- products[grep(name, products$Varenavn, ignore.case = T, value = F), ]# et datasett hvor inputen og datasettet matcher
+  Varenavn <- tolower(tabell$Varenavn)
+  rad <- tabell[grep(name, tabell$Varenavn, ignore.case = T, value = F), ]# et datasett hvor inputen og datasettet matcher
+  
   if(name==""){
-    return()
-  }
-  else if (nrow(rad)>=0){   #hvis rad-datasettet har et innhold, altså antall rader større enn 0
-    tabell <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
-    names(tabell) <- substring(names(tabell),5) #removing the "rad." part of every colname
-    print(paste("We found: ", nrow(tabell), "liquor(s) matching your input."))
     return(tabell)
   }
   
+  else if (nrow(rad)>=0){   #hvis rad-datasettet har et innhold, altså antall rader større enn 0
+    tabell_name <- data.frame(rad$Varenavn, rad$Varetype, rad$Land, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
+    names(tabell_name) <- substring(names(tabell_name),5) #removing the "rad." part of every colname
+    print(paste("Vi fant: ", nrow(tabell_name), "drikkevare(r) som inneholdt", name, "."))
+    return(tabell_name)
+  }
+  
   else {
-    print("No such liquor name in Vinmonopolets storage, please try again: ")
-    return(choose_name())
+    print(paste("Vinmolopolet har dessverre ingen drikkevarer med navnet ", name, ". Vær så snill og prøv igjen: "))
+    name <- readline(prompt = "Velg navn på drikkevaren du ønsker å finne: ")
+    return(choose_name(name, tabell))
   }
 }
-choose_name()
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-
-name <- readline(prompt = "Choose the name of the liquor you want (press enter if you don't want to filtrate on name): ")
-#Make it case insensitive:
-name <- strsplit(tolower(name), " ")
-Varenavn <- tolower(products$Varenavn)
-check<-(all(name %in% Varenavn))
-
-
-
-#Må gjøres med funksjonen:
-#- kunne trykke enter for å hoppe videre til annen input --> gjøres vell i hovedfunksjonen?
-
-
-#Funksjon for pris
-
+#PRIS FUNKSJON
 #Lager min- og makspris for å gi brukeren et interval for pris
-
 min_price <- round(min(products$Pris))#rounded minimum price 
 max_price <- round(max(products$Pris))#rounded maximum price
 
 
-choose_price <- function(){
-  pris_max <- readline(prompt=paste0("The prices range from ",min_price," to ",max_price,".", " Choose your maximum price: "))
-  pris_min <- readline(prompt=paste0("Choose your minimum price: "))
-  pris_max <- as.numeric(pris_max)
-  pris_min <- as.numeric(pris_min)
+choose_price <- function(pris_max, pris_min, tabell){
+  pris_max_n <- as.numeric(pris_max)
+  pris_min_n <- as.numeric(pris_min)
   
-  if(is.na(pris_max) && is.na(pris_min)){
-    return()
-  }
-  else if (pris_max <= max_price && pris_min >= min_price) {
-    p_max_enquo = enquo(pris_max)
-    p_min_enquo = enquo(pris_min) #får den under til å funke, men aner faen ikke hvorfor - this took me 6 hours :) 
-    rad <- products %>% filter(Pris <= (!!p_max_enquo) && Pris >= (!!p_min_enquo))
-    tabell <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl) #kanskje gjøre innholdet i denne dataframen til en listen
-    #slik at man slipper å skrive dette inn for hver funksjon
-    names(tabell) <- substring(names(tabell),5)
-    print(paste("We found: ", nrow(rad), "liquor(s) matching your input."))
+  #If one of the inputs aren't numbers:
+  if (pris_max == "" && pris_min == ""){
     return(tabell)
   }
-  else{
-    print("Not a valid price, please try again: ")
-    return(choose_price())
+  
+  #If they only have one limit:
+  else if ((pris_max == "" && pris_min_n >= min_price) || (pris_max_n <= max_price && pris_min == "")){
+    if (pris_max == ""){
+      p_min_enquo = enquo(pris_min_n)
+      
+      rad <- tabell %>% filter(Pris >= (!!p_min_enquo))
+      pris_tabell <- data.frame(rad$Varenavn, rad$Varetype, rad$Land, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl) 
+      names(pris_tabell) <- substring(names(pris_tabell),5)
+      print(paste("Vi fant: ", nrow(rad), "drikkevarer i denne prisklassen"))
+      return(pris_tabell)
+    }
+    else {
+      p_max_enquo = enquo(pris_max_n)
+      
+      rad <- tabell %>% filter(Pris <= (!!p_max_enquo))
+      pris_tabell <- data.frame(rad$Varenavn, rad$Varetype, rad$Land, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
+      names(pris_tabell) <- substring(names(pris_tabell),5)
+      print(paste("Vi fant: ", nrow(rad), "drikkevarer i denne prisklassen"))
+      return(pris_tabell)
+    }
   }
-}
-choose_price()
+  
+  #If the user doesnt enter numbers
+  else if (is.na(pris_max_n) || is.na(pris_min_n)){
+    print("Ikke gyldig pris, vær så snill og prøv igjen: ")
+    pris_max <- readline(prompt=paste0("Prisene hos oss varierer fra ",min_price," til ",max_price,".", " Skriv inn din maks pris: "))
+    pris_min <- readline(prompt=paste0("Skriv inn din minimum pris: "))
+    
+    return(choose_price(pris_max, pris_min, tabell))
+  }
+  
+  #If they have a upper and lower limit, filter within these:
+  else if (pris_max_n <= max_price && pris_min_n >= min_price) {
+    p_max_enquo = enquo(pris_max_n)
+    p_min_enquo = enquo(pris_min_n) #får den under til å funke, men aner faen ikke hvorfor - this took me 6 hours :) 
+    
+    rad <- tabell %>% filter(Pris <= (!!p_max_enquo) && Pris >= (!!p_min_enquo))
+    pris_tabell <- data.frame(rad$Varenavn, rad$Varetype, rad$Land, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl) 
+    names(pris_tabell) <- substring(names(pris_tabell),5)
+    print(paste("Vi fant: ", nrow(rad), "drikkevarer i denne prisklassen"))
+    return(pris_tabell)
+  }
+  
+  #usikker på om denne trengs? Kanskje greit å ha? 
+  else {
+  print("Ikke gyldig pris, vær så snill og prøv igjen: ")
+  pris_max <- readline(prompt=paste0("Prisene hos oss varierer fra ",min_price," til ",max_price,".", " Skriv inn din maks pris: "))
+  pris_min <- readline(prompt=paste0("Skriv inn din minimum pris: "))
+  
+  return(choose_price(pris_max, pris_min, tabell))
+  }
+
+} 
 
 
-#Funksjon for varetype, veldig lik funksjonen for navn
-choose_type <- function(){
-  type <- readline(prompt = "Choose the type of the liquor you want: ")
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+#VARETYPE FUNKSJON
+choose_type <- function(type, tabell){
   #Make it case insensitive:
   type <- tolower(type)
-  Varetype <- tolower(products$Varetype)
-  rad <- products[grep(type, products$Varetype,ignore.case = TRUE, value = F), ]
+  Varetype <- tolower(tabell$Varetype)
+  rad <- tabell[grep(type, tabell$Varetype,ignore.case = TRUE, value = F), ]
+  
   if(type==""){
-    return()
+    return(tabell)
   }
   else if (nrow(rad)!=0){
-    rad <- products[grep(type, products$Varetype,ignore.case = TRUE, value = F), ]
-    tabell_type <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil,rad$Vareurl)
+    rad <- tabell[grep(type, tabell$Varetype,ignore.case = TRUE, value = F), ]
+    tabell_type <- data.frame(rad$Varenavn, rad$Varetype, rad$Land, rad$Volum, rad$Pris, rad$Passertil,rad$Vareurl)
     names(tabell_type) <- substring(names(tabell_type),5)
-    print(paste("We found ", nrow(tabell_type), " liquors"))
+    print(paste("Vi fant: ", nrow(rad), "drikkevarer av denne typen"))
     return (tabell_type)
   } 
   else {
-    print("No such liquor name in Vinmonopolets storage, please try again: ")
-    return(choose_type())
+    print("Vinmonopolet har dessverre ingen drikkevarer av denne typen, vær så snill og prøv igjen: ")
+    type <- readline(prompt = "Velg hva slags type drikkevarer du ønsker: ")
+    return(choose_type(type, tabell))
   }
 }
-choose_type()
 
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #Funksjon for hvilket land
-choose_country <- function(){
-  country <- readline(prompt = "Which country do you want the liqour to come from? ")
+choose_country <- function(country, tabell){
   #Make it case insensitive:
   country <- tolower(country)
-  land <- tolower(products$Land)
+  land <- tolower(tabell$Land)
   
   if(country==""){
+    return(tabell)
   }
   else if (country %in% land){
-    rad <- products[grep(country, products$Land, ignore.case = TRUE, value = F), ]
-    tabell_country <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
+    rad <- tabell[grep(country, tabell$Land, ignore.case = TRUE, value = F), ]
+    tabell_country <- data.frame(rad$Varenavn, rad$Varetype, rad$Land, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
     names(tabell_country) <- substring(names(tabell_country),5)
-    print(paste("We found ", nrow(rad), " liquors"))
+    print(paste("Vi fant: ", nrow(rad), " drikkevarer fra ", country))
     return (tabell_country)
   } 
   
   else {
-    print(paste("No liquor from", country, "in Vinmonopolets storage, please try again: "))
-    return(choose_country())
+    print(paste("Vinmonopolet har dessverre ingen drikkevarer fra ", country, " vær så snill og prøv igjen: "))
+    country <- readline(prompt = "Hvilket land ønsker du at varene skal være fra? ")
+    return(choose_country(country, tabell))
   }
 }
-choose_country()
 
-#Funksjon for hva den skal passe til
-choose_fits <- function(){
-  fits <- readline(prompt = "What do you want the liqour to fit well with: ")
-  
-  
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+#PASSER TIL FUNKSJON
+choose_fits <- function(fits, tabell){
   #Make it case insensitive:
   fits <- tolower(as.list(scan(text=fits, what = ","))) #Småbokstaver og lager til liste
   fits <- fits[fits != "og"]  #fjerner ordene som ikke skal med:
   fits <- fits[fits != "and"] #fjerner ordene som ikke skal med:
   
   
-  passertil <- tolower(products$Passertil)
+  passertil <- tolower(tabell$Passertil)
   
-  rad <- products[grep(fits[1], products$Passertil,ignore.case = TRUE, value = F), ]
+  rad <- tabell[grep(fits[1], tabell$Passertil,ignore.case = TRUE, value = F), ]
   
-  #if(length(fits)==0){
-  # return()
+  if(fits == ""){
+    return(tabell)
+  }
   
+  else {
   #bruker for loop for at det skal filtreres for alle ordene brukeren har skrevet inn 
   for (i in 1:length(fits)){
     rad <- rad[grep(fits[i], rad$Passertil,ignore.case = TRUE, value = F), ]
   }
   
   #Lager en dataramme av det ferdig filtrerte "rad"
-  tabell_fits <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil,rad$Vareurl)
+  tabell_fits <- data.frame(rad$Varenavn, rad$Varetype, rad$Land,rad$Volum, rad$Pris, rad$Passertil,rad$Vareurl)
   names(tabell_fits) <- substring(names(tabell_fits),5)
   
   
   #hvis det er rader igjen etter filtreringen: 
   if (nrow(rad) != 0){
-    print(paste("We found: ", nrow(rad), "liquor(s) matching your input."))
+    print(paste("Vi fant ", nrow(rad), "drikkevarer som passer til", fits))
     return (tabell_fits)
   }
   else{
-    print(paste("We couldn't find any liquor that is good with those dishes. Please try again: "))
-    return (choose_fits())
+    print(paste("Vi fant dessverre ingen varer som passer til", fits, ", vær så snill og prøv igjen: "))
+    fits <- readline(prompt = "Hva ønsker du at drikkevaren skal passe bra til: ")
+    return (choose_fits(fits, tabell))
   }
-  
+  }
 }
 
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
-choose_fits()
-
-
-filtering<-products[grep(price, products$Pris, value = F), ]
-country<- choose_country()
-filtering<-products[grep(country, products$Land, value = F), ]
-fits<- choose_fits()
-filtering<-products[grep(fits, products$Passertil, value = F), ]
-
-
+#HOVEDFUNKSJON
 full_function <- function(){
-  name_input <-choose_name()
-  if (is.null(name_input)){
-    #Hvis brukeren ikke taster inn navn vil de andre funksjonene kjøres for å filtrere på
-    #pris, type, smak, lukt etc. 
-    price <- choose_price()
-    if (is.null(price)){
-      type<-choose_type()
-      if(is.null(type)){
-        country<-choose_country()
-        if(is.null(country)){
-          fits<-choose_fits()
-          if(is.null(fits)){
-            return()
-          }
-          else{
-            filtering<-products[grep(fits, products$Pris, value = F), ]
-          }
-        }
-        else{
-          filtering<-products[grep(country, products$Pris, value = F), ]
-        }
-        
-      }
-      else{
-        filtering<-products[grep(type, products$Pris, value = F), ]
-      }
-    }
+  name <- readline(prompt = "Velg navn på drikkevaren du ønsker å finne: ")
+  
+  name_tabell <- choose_name(name, products)
     
+  pris_max <- readline(prompt=paste0("Prisene hos oss varierer fra ",min_price," til ",max_price,".", " Skriv inn din maks pris: "))
+  pris_min <- readline(prompt=paste0("Skriv inn din minimum pris: "))
+  
+  pris_tabell <- choose_price(pris_max, pris_min, name_tabell)
     
-  }
-  else{
-    filtering<-products[grep(price, products$Pris, value = F), ]
+  type <- readline(prompt = "Velg hva slags type drikkevarer du ønsker: ")
+  type_tabell <- choose_type(type, pris_tabell)
+    
+  country <- readline(prompt = "Hvilket land ønsker du at varene skal være fra? ")
+  country_tabell <- choose_country(country, type_tabell)
+    
+  fits <- readline(prompt = "Hva ønsker du at drikkevaren skal passe bra til: ")
+  fits_tabell <- choose_fits(fits, country_tabell)
+  
+  return(fits_tabell)
   }
   
-  
-  else{
-    return(name_input)
-  }
-  
-}
-
 full_function()
 
 
-
-
-?prompt_are
 
 #Bruker taster inn navnet på alkoholen
 name <- readline(prompt = "Choose the name of the liquor you want (press enter if you don't want to filtrate on name: ")
@@ -256,4 +259,3 @@ passer_til <- navn$Passertil01
 tabell <- products[grep(type, products$Varetype, value = F), ]
 #her plukker vi ut de som har lik passeril01 som det brukeren tastet inn
 tabell2 <- products[grep(passer_til, products$Passertil01, value = F), ]
-
