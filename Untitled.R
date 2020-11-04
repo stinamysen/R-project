@@ -127,7 +127,9 @@ choose_country <- function(){
   country <- tolower(country)
   land <- tolower(products$Land)
   
-  if (country %in% land){
+  if(country==""){
+  }
+  else if (country %in% land){
     rad <- products[grep(country, products$Land, ignore.case = TRUE, value = F), ]
     tabell_country <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
     names(tabell_country) <- substring(names(tabell_country),5)
@@ -142,19 +144,23 @@ choose_country <- function(){
 }
 choose_country()
 
-
-
 #Funksjon for hva den skal passe til
 choose_fits <- function(){
   fits <- readline(prompt = "What do you want the liqour to fit well with: ")
+  
+ 
   #Make it case insensitive:
-  fits <- tolower(as.list(scan(text=fits, what = ""))) #Småbokstaver og lager til liste
+  fits <- tolower(as.list(scan(text=fits, what = ","))) #Småbokstaver og lager til liste
   fits <- fits[fits != "og"]  #fjerner ordene som ikke skal med:
   fits <- fits[fits != "and"] #fjerner ordene som ikke skal med:
   
+
   passertil <- tolower(products$Passertil)
   
   rad <- products[grep(fits[1], products$Passertil,ignore.case = TRUE, value = F), ]
+  
+  #if(length(fits)==0){
+   # return()
   
   #bruker for loop for at det skal filtreres for alle ordene brukeren har skrevet inn 
   for (i in 1:length(fits)){
@@ -165,12 +171,12 @@ choose_fits <- function(){
   tabell_fits <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil,rad$Vareurl)
   names(tabell_fits) <- substring(names(tabell_fits),5)
   
+  
   #hvis det er rader igjen etter filtreringen: 
   if (nrow(rad) != 0){
     print(paste("We found: ", nrow(rad), "liquor(s) matching your input."))
     return (tabell_fits)
   }
-  
   else{
     print(paste("We couldn't find any liquor that is good with those dishes. Please try again: "))
     return (choose_fits())
@@ -178,7 +184,16 @@ choose_fits <- function(){
   
 }
 
+
+
 choose_fits()
+
+
+filtering<-products[grep(price, products$Pris, value = F), ]
+country<- choose_country()
+filtering<-products[grep(country, products$Land, value = F), ]
+fits<- choose_fits()
+filtering<-products[grep(fits, products$Passertil, value = F), ]
 
 
 full_function <- function(){
@@ -186,21 +201,37 @@ full_function <- function(){
   if (is.null(name_input)){
     #Hvis brukeren ikke taster inn navn vil de andre funksjonene kjøres for å filtrere på
     #pris, type, smak, lukt etc. 
-    type <-choose_type()
-    if (is.null(type)){
-      filtering<-products[grep(type, products$Varetype, value = F), ]
-    }
-    else
-    
     price <- choose_price()
-    filtering<-products[grep(price, products$Pris, value = F), ]
-    country<- choose_country()
-    filtering<-products[grep(country, products$Land, value = F), ]
-    fits<- choose_fits()
-    filtering<-products[grep(fits, products$Passertil, value = F), ]
-    
-    return(filtering)
+    if (is.null(price)){
+      type<-choose_type()
+      if(is.null(type)){
+        country<-choose_country()
+        if(is.null(country)){
+          fits<-choose_fits()
+          if(is.null(fits)){
+            return()
+          }
+          else{
+            filtering<-products[grep(fits, products$Pris, value = F), ]
+          }
+        }
+        else{
+          filtering<-products[grep(country, products$Pris, value = F), ]
+        }
+        
+      }
+      else{
+        filtering<-products[grep(type, products$Pris, value = F), ]
+      }
     }
+    
+      
+    }
+    else{
+      filtering<-products[grep(price, products$Pris, value = F), ]
+    }
+      
+    
   else{
     return(name_input)
   }
@@ -227,11 +258,4 @@ tabell <- products[grep(type, products$Varetype, value = F), ]
 tabell2 <- products[grep(passer_til, products$Passertil01, value = F), ]
 
 
-#MÅ GJØRES VIDERE
 
-#choose_fits()- funksjonen, egt også choose_name function : 
-# gjøre det sånn at rekkefølgen på inputen fra brukeren ikke har noe å si på hva outputen blir
-#Dette kan kanskje gjøres med en if?
-#if inputen til brukeren er større en lengde=1 kan man da kjøre en loop der man filterer først for den ene stringen i inputen, så den andre, så den tredje
-#osv, for å så finne de radene som gjelder. Vet ikke hvor lett dette er, mulig vi kan spørre studass  om det,
-#men det gjør hvertfall kvaliteten enda bedre.
