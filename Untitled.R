@@ -29,7 +29,10 @@ choose_name <-function(){
   name <- tolower(name)
   Varenavn <- tolower(products$Varenavn) 
   rad <- products[grep(name, products$Varenavn, ignore.case = T, value = F), ]# et datasett hvor inputen og datasettet matcher
-  if (nrow(rad)>0){   #hvis rad-datasettet har et innhold, altså antall rader større enn 0
+  if(name==""){
+    return()
+  }
+  else if (nrow(rad)>=0){   #hvis rad-datasettet har et innhold, altså antall rader større enn 0
     tabell <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
     names(tabell) <- substring(names(tabell),5) #removing the "rad." part of every colname
     print(paste("We found: ", nrow(tabell), "liquor(s) matching your input."))
@@ -42,6 +45,8 @@ choose_name <-function(){
   }
 }
 choose_name()
+
+
 
 name <- readline(prompt = "Choose the name of the liquor you want (press enter if you don't want to filtrate on name): ")
 #Make it case insensitive:
@@ -62,12 +67,17 @@ check<-(all(name %in% Varenavn))
 min_price <- round(min(products$Pris))#rounded minimum price 
 max_price <- round(max(products$Pris))#rounded maximum price
 
+
 choose_price <- function(){
   pris_max <- readline(prompt=paste0("The prices range from ",min_price," to ",max_price,".", " Choose your maximum price: "))
   pris_min <- readline(prompt=paste0("Choose your minimum price: "))
   pris_max <- as.numeric(pris_max)
   pris_min <- as.numeric(pris_min)
-  if (pris_max <= max_price && pris_min >= min_price) {
+  
+  if(is.na(pris_max) && is.na(pris_min)){
+    return()
+  }
+  else if (pris_max <= max_price && pris_min >= min_price) {
     p_max_enquo = enquo(pris_max)
     p_min_enquo = enquo(pris_min) #får den under til å funke, men aner faen ikke hvorfor - this took me 6 hours :) 
     rad <- products %>% filter(Pris <= (!!p_max_enquo) && Pris >= (!!p_min_enquo))
@@ -92,7 +102,10 @@ choose_type <- function(){
   type <- tolower(type)
   Varetype <- tolower(products$Varetype)
   rad <- products[grep(type, products$Varetype,ignore.case = TRUE, value = F), ]
-  if (nrow(rad)!=0){
+  if(type==""){
+    return()
+  }
+  else if (nrow(rad)!=0){
     rad <- products[grep(type, products$Varetype,ignore.case = TRUE, value = F), ]
     tabell_type <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil,rad$Vareurl)
     names(tabell_type) <- substring(names(tabell_type),5)
@@ -105,6 +118,7 @@ choose_type <- function(){
   }
 }
 choose_type()
+
 
 #Funksjon for hvilket land
 choose_country <- function(){
@@ -137,7 +151,7 @@ choose_fits <- function(){
   fits <- strsplit(tolower(fits), ",")
   passertil <- strsplit(tolower(products$Passertil)," ")
   rad <- products[grep(fits, products$Passertil, ignore.case = TRUE, value = F), ]
-    rad <- products[grep(fits, products$Passertil, ignore.case = TRUE, value = F), ]
+  if(nrow(rad)>0){
     tabell_fits <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil,rad$Vareurl)
     names(tabell_fits) <- substring(names(tabell_fits),5)
     print(paste("We found ", nrow(rad), " liquors"))
@@ -154,22 +168,37 @@ choose_fits()
 
 
 full_function <- function(){
-  name <- choose_name()
-  if (name = ""){
+  name_input <-choose_name()
+  if (is.null(name_input)){
     #Hvis brukeren ikke taster inn navn vil de andre funksjonene kjøres for å filtrere på
     #pris, type, smak, lukt etc. 
-    type <- choose_type()
+    type <-choose_type()
+    if (is.null(type)){
+      filtering<-products[grep(type, products$Varetype, value = F), ]
+    }
+    else
+    
     price <- choose_price()
+    filtering<-products[grep(price, products$Pris, value = F), ]
+    country<- choose_country()
+    filtering<-products[grep(country, products$Land, value = F), ]
+    fits<- choose_fits()
+    filtering<-products[grep(fits, products$Passertil, value = F), ]
     
-    
-  }
+    return(filtering)
+    }
   else{
-    #else her vil være at brukeren taster inn navnet på en type alkohol
-    # funksjonen må her da plukke ut 
+    return(name_input)
   }
+
 }
 
 full_function()
+
+
+
+
+?prompt_are
 
 #Bruker taster inn navnet på alkoholen
 name <- readline(prompt = "Choose the name of the liquor you want (press enter if you don't want to filtrate on name: ")
