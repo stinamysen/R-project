@@ -148,23 +148,37 @@ choose_country()
 choose_fits <- function(){
   fits <- readline(prompt = "What do you want the liqour to fit well with: ")
   #Make it case insensitive:
-  fits <- strsplit(tolower(fits), ",")
-  passertil <- strsplit(tolower(products$Passertil)," ")
-  rad <- products[grep(fits, products$Passertil, ignore.case = TRUE, value = F), ]
-  if(nrow(rad)>0){
-    tabell_fits <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil,rad$Vareurl)
-    names(tabell_fits) <- substring(names(tabell_fits),5)
-    print(paste("We found ", nrow(rad), " liquors"))
-    return (tabell_fits)
-  } 
+  fits <- tolower(as.list(scan(text=fits, what = ""))) #Småbokstaver og lager til liste
+  fits <- fits[fits != "og"]  #fjerner ordene som ikke skal med:
+  fits <- fits[fits != "and"] #fjerner ordene som ikke skal med:
   
-  else {
-    print("No liquor in Vinmonopolets storage fits with that, please try again: ")
-    return(choose_fits())
+  passertil <- tolower(products$Passertil)
+  
+  rad <- products[grep(fits[1], products$Passertil,ignore.case = TRUE, value = F), ]
+  
+  #bruker for loop for at det skal filtreres for alle ordene brukeren har skrevet inn 
+  for (i in 1:length(fits)){
+    rad <- rad[grep(fits[i], rad$Passertil,ignore.case = TRUE, value = F), ]
   }
+  
+  #Lager en dataramme av det ferdig filtrerte "rad"
+  tabell_fits <- data.frame(rad$Varenavn, rad$Varetype, rad$Volum, rad$Pris, rad$Passertil,rad$Vareurl)
+  names(tabell_fits) <- substring(names(tabell_fits),5)
+  
+  #hvis det er rader igjen etter filtreringen: 
+  if (nrow(rad) != 0){
+    print(paste("We found: ", nrow(rad), "liquor(s) matching your input."))
+    return (tabell_fits)
+  }
+  
+  else{
+    print(paste("We couldn't find any liquor that is good with those dishes. Please try again: "))
+    return (choose_fits())
+  }
+  
 }
-choose_fits()
 
+choose_fits()
 
 
 full_function <- function(){
