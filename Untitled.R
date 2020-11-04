@@ -247,6 +247,18 @@ full_function <- function(){
 full_function()
 
 
+#KOMMENTARER FRA STINA
+#DRITBRA, men her har noe vi kan jobbe videre med:
+    #- hvis en varetype ikke har noe i kolonnen "passer til", slik som feks vodka, hopp over?
+    #- fits-funksjonen funker ikke å hoppe over, kommer error- 
+    #- lage en loop til choose_name og choose_type  slik  du gjorde i fits-funksjonen
+    # for  at man ikke trenger å skrive i riktig rekkefølge?
+
+    
+
+
+  
+
 
 #Bruker taster inn navnet på alkoholen
 name <- readline(prompt = "Choose the name of the liquor you want (press enter if you don't want to filtrate on name: ")
