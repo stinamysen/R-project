@@ -249,22 +249,8 @@ full_function <- function(){
     sumrow = 0 
     row = str_length(str_trim(country_tabell$Passertil[i]))
     sumrow = sumrow + row
-<<<<<<< HEAD
-=======
+
   }
-  
-  if (sumrow != 0){
-    fits <- readline(prompt = "Hva ønsker du at drikkevaren skal passe bra til: ")
-    fits_tabell <- choose_fits(fits, country_tabell)
-    return(fits_tabell)
->>>>>>> ad1176fadd295531aa99678c0170af5637dc065d
-  }
-  else {
-    tabell <- country_tabell %>% select(-Passertil) #Fjerner kolonnen med passer til siden det ikke er noe der
-    return (tabell)
-  }
-  #BETT ENDRING SLUTT
-}
   
   if (sumrow != 0){
     fits <- readline(prompt = "Hva ønsker du at drikkevaren skal passe bra til: ")
@@ -276,8 +262,8 @@ full_function <- function(){
     return (tabell)
   }
   #BETT ENDRING SLUTT
-  
 }
+
   
 full_function()
 
