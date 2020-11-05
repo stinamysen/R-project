@@ -243,6 +243,7 @@ full_function <- function(){
   country <- readline(prompt = "Hvilket land ønsker du at varene skal være fra? ")
   country_tabell <- choose_country(country, type_tabell)
   
+  #BETT ENDRING START
   #Teller hvor mange ord i hver linje og summerer 
   for (i in nrow(country_tabell)){
     sumrow = 0 
@@ -259,6 +260,7 @@ full_function <- function(){
     tabell <- country_tabell %>% select(-Passertil) #Fjerner kolonnen med passer til siden det ikke er noe der
     return (tabell)
   }
+  #BETT ENDRING SLUTT
   
 }
   
