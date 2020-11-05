@@ -237,20 +237,32 @@ full_function <- function(){
     
   country <- readline(prompt = "Hvilket land ønsker du at varene skal være fra? ")
   country_tabell <- choose_country(country, type_tabell)
-    
-  fits <- readline(prompt = "Hva ønsker du at drikkevaren skal passe bra til: ")
-  fits_tabell <- choose_fits(fits, country_tabell)
   
-  return(fits_tabell)
+  #BETT ENDRING START
+  #Teller hvor mange ord i hver linje og summerer 
+  for (i in nrow(country_tabell)){
+    sumrow = 0 
+    row = str_length(str_trim(country_tabell$Passertil[i]))
+    sumrow = sumrow + row
   }
+  
+  if (sumrow != 0){
+    fits <- readline(prompt = "Hva ønsker du at drikkevaren skal passe bra til: ")
+    fits_tabell <- choose_fits(fits, country_tabell)
+    return(fits_tabell)
+  }
+  else {
+    tabell <- country_tabell %>% select(-Passertil) #Fjerner kolonnen med passer til siden det ikke er noe der
+    return (tabell)
+  }
+  #BETT ENDRING SLUTT
+}
   
 full_function()
 
 
 #KOMMENTARER FRA STINA
 #DRITBRA, men her har noe vi kan jobbe videre med:
-    #- hvis en varetype ikke har noe i kolonnen "passer til", slik som feks vodka, hopp over?
-    #- fits-funksjonen funker ikke å hoppe over, kommer error- 
     #- lage en loop til choose_name og choose_type  slik  du gjorde i fits-funksjonen
     # for  at man ikke trenger å skrive i riktig rekkefølge?
 
