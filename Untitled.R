@@ -9,6 +9,8 @@ library(dplyr) #rename
 library(shiny)#filter name function
 library(stringr)
 library(anytime) #endre tid
+library(rtrim) #trim
+
 #----------------------------------------------------------------------------------------------------------------------
 #Since the data at vinmonopolet is changing everyday, we use the data.table library and the fread()-function 
 #found this from https://www.r-bloggers.com/2015/03/getting-data-from-an-online-source/
@@ -19,9 +21,10 @@ is.data.frame(produkter)
 products <- produkter %>% 
   select(-HovedGTIN,-Miljosmart_emballasje, -Gluten_lav_pa, -AndreGTINs) %>% 
   filter(Alkohol!="0,00") %>%
-  unite('Passertil', Passertil01,Passertil02,Passertil03, sep = " ", remove=F ) %>% #Legger sammen passertil kolonnene
+  unite('Passertil', Passertil01,Passertil02,Passertil03, sep = " ", remove=T ) %>% #Legger sammen passertil kolonnene
   mutate(Datotid= anytime(Datotid)) %>% #for å få finere tid-format
-  mutate(Pris= as.numeric(gsub(",",".",Pris)))# %>%  #changing the separator , to . and making numeric
+  mutate(Pris= as.numeric(gsub(",",".",Pris))) #%>%  changing the separator , to . and making numeric
+
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -176,13 +179,14 @@ choose_country <- function(country, tabell){
 }
 
 
+
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 #PASSER TIL FUNKSJON
 choose_fits <- function(fits, tabell){
   #Make it case insensitive:
-  fits <- tolower(as.list(scan(text=fits, what = ","))) #Småbokstaver og lager til liste
+  fits <- tolower(as.list(scan(text=fits, what = ","))) #Småbokstaver og lager til liste - komma?????
   fits <- fits[fits != "og"]  #fjerner ordene som ikke skal med:
   fits <- fits[fits != "and"] #fjerner ordene som ikke skal med:
   
@@ -191,33 +195,34 @@ choose_fits <- function(fits, tabell){
   
   rad <- tabell[grep(fits[1], tabell$Passertil,ignore.case = TRUE, value = F), ]
   
-  if(fits == ""){
+  if(length(fits) == 0){
     return(tabell)
   }
   
   else {
-  #bruker for loop for at det skal filtreres for alle ordene brukeren har skrevet inn 
-  for (i in 1:length(fits)){
+    #bruker for loop for at det skal filtreres for alle ordene brukeren har skrevet inn 
+    for (i in 1:length(fits)){
     rad <- rad[grep(fits[i], rad$Passertil,ignore.case = TRUE, value = F), ]
-  }
+    }
   
-  #Lager en dataramme av det ferdig filtrerte "rad"
-  tabell_fits <- data.frame(rad$Varenavn, rad$Varetype, rad$Land,rad$Volum, rad$Pris, rad$Passertil,rad$Vareurl)
-  names(tabell_fits) <- substring(names(tabell_fits),5)
+    #Lager en dataramme av det ferdig filtrerte "rad"
+    tabell_fits <- data.frame(rad$Varenavn, rad$Varetype, rad$Land,rad$Volum, rad$Pris, rad$Passertil,rad$Vareurl)
+    names(tabell_fits) <- substring(names(tabell_fits),5)
   
   
-  #hvis det er rader igjen etter filtreringen: 
-  if (nrow(rad) != 0){
-    print(paste("Vi fant ", nrow(rad), "drikkevarer som passer til", fits))
-    return (tabell_fits)
+    #hvis det er rader igjen etter filtreringen: 
+    if (nrow(rad) != 0){
+      print(paste("Vi fant ", nrow(rad), "drikkevarer som passer til", fits))
+      return (tabell_fits)
+    }
+
+    else{
+      print(paste("Vi fant dessverre ingen varer som passer til", fits, ", vær så snill og prøv igjen: "))
+      fits <- readline(prompt = "Hva ønsker du at drikkevaren skal passe bra til: ")
+      return (choose_fits(fits, tabell))
+    }
   }
-  else{
-    print(paste("Vi fant dessverre ingen varer som passer til", fits, ", vær så snill og prøv igjen: "))
-    fits <- readline(prompt = "Hva ønsker du at drikkevaren skal passe bra til: ")
-    return (choose_fits(fits, tabell))
-  }
-  }
-}
+} 
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -237,14 +242,28 @@ full_function <- function(){
     
   country <- readline(prompt = "Hvilket land ønsker du at varene skal være fra? ")
   country_tabell <- choose_country(country, type_tabell)
-    
-  fits <- readline(prompt = "Hva ønsker du at drikkevaren skal passe bra til: ")
-  fits_tabell <- choose_fits(fits, country_tabell)
   
-  return(fits_tabell)
+  #Teller hvor mange ord i hver linje og summerer 
+  for (i in nrow(country_tabell)){
+    sumrow = 0 
+    row = str_length(str_trim(country_tabell$Passertil[i]))
+    sumrow = sumrow + row
   }
   
+  if (sumrow != 0){
+    fits <- readline(prompt = "Hva ønsker du at drikkevaren skal passe bra til: ")
+    fits_tabell <- choose_fits(fits, country_tabell)
+    return(fits_tabell)
+  }
+  else {
+    tabell <- country_tabell %>% select(-Passertil) #Fjerner kolonnen med passer til siden det ikke er noe der
+    return (tabell)
+  }
+  
+}
+  
 full_function()
+
 
 
 
