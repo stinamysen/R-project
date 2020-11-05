@@ -186,7 +186,8 @@ choose_country <- function(country, tabell){
 #PASSER TIL FUNKSJON
 choose_fits <- function(fits, tabell){
   #Make it case insensitive:
-  fits <- tolower(as.list(scan(text=fits, what = ","))) #Småbokstaver og lager til liste - komma?????
+  fits <- gsub(",","",fits)
+  fits <- tolower(as.list(scan(text=fits, what = ","))) #Småbokstaver og lager til liste - komma????? - hva gjør den egt
   fits <- fits[fits != "og"]  #fjerner ordene som ikke skal med:
   fits <- fits[fits != "and"] #fjerner ordene som ikke skal med:
   
@@ -263,6 +264,7 @@ full_function <- function(){
   }
   #BETT ENDRING SLUTT
 }
+  
 
   
 full_function()
