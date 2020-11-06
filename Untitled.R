@@ -288,56 +288,50 @@ full_function <- function(){
   type_tabell <- choose_type(type, pris_tabell)
   if(nrow(type_tabell)==1){
     return(type_tabell)}
+  
     else{
       country <- readline(prompt = "Hvilket land ønsker du at varene skal være fra? ")
       country_tabell <- choose_country(country, type_tabell)
+      
       if(nrow(country_tabell)==1){
-        return(country_tabell)}
+        return(country_tabell)
+        }
+      
       else{
-        fits <- readline(prompt = "Hva ønsker du at drikkevaren skal passe bra til: ")
-        fits_tabell <- choose_fits(fits, country_tabell)
-        return(fits_tabell)
+        for (i in nrow(country_tabell)){
+          sumrow = 0 
+          row = str_length(str_trim(country_tabell$Passertil[i]))
+          sumrow = sumrow + row
+        }
+        
+        if (sumrow != 0){
+          fits <- readline(prompt = "Hva ønsker du at drikkevaren skal passe bra til: ")
+          fits_tabell <- choose_fits(fits, country_tabell)
+          return(fits_tabell)
+          }
+        else {
+          tabell <- country_tabell %>% select(-Passertil) #Fjerner kolonnen med passer til siden det ikke er noe der
+          return (tabell)
+          }
+        }
       }
     }
-  }
   }
 }
   
 full_function()
 
+
+
+
+
+
+
+
 #KOMMENTARER FRA STINA
 #DRITBRA, men her har noe vi kan jobbe videre med:
     #- lage en loop til choose_name og choose_type  slik  du gjorde i fits-funksjonen
     # for  at man ikke trenger å skrive i riktig rekkefølge?
-
- 
-
-
-
-#bettan sitt   
-for (i in nrow(country_tabell)){
-  sumrow = 0 
-  row = str_length(str_trim(country_tabell$Passertil[i]))
-  sumrow = sumrow + row
-  
-}
-#Lagt til bettan sitt
-if (sumrow != 0){
-  fits <- readline(prompt = "Hva ønsker du at drikkevaren skal passe bra til: ")
-  fits_tabell <- choose_fits(fits, country_tabell)
-  return(fits_tabell)}
-
-}
-
-
-
-
-else {
-  tabell <- country_tabell %>% select(-Passertil) #Fjerner kolonnen med passer til siden det ikke er noe der
-  return (tabell)
-}
-
-
   
 
 
