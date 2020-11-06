@@ -22,9 +22,10 @@ is.data.frame(produkter)
 products <- produkter %>% 
   select(-HovedGTIN,-Miljosmart_emballasje, -Gluten_lav_pa, -AndreGTINs) %>% 
   filter(Alkohol!="0,00") %>%
-  unite("Passertil", Passertil01, Passertil02, Passertil03, sep=" ", remove = T) %>% 
+  unite('Passertil', Passertil01,Passertil02,Passertil03, sep = " ", remove=F ) %>% #Legger sammen passertil kolonnene
   mutate(Datotid= anytime(Datotid)) %>% #for å få finere tid-format
-  mutate(Pris<-as.numeric((gsub(",", ".",Pris))))
+  mutate(Pris= as.numeric(gsub(",",".",Pris)))# %>%  #changing the separator , to . and making numeric
+
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #NAME FUNKSJON 
@@ -48,7 +49,6 @@ helt_lik<-function(name,tabell){
   }
     
 }
-helt_lik("løiten export",products)
 
 choose_name <-function(name, tabell){
   name<-tolower(name) #for at ikke outputen "vi fant ..... drikkervarer som inneholdt..." skal bli gjentatt flere ganger hvis brukeren skriver fler enn 1 ord
@@ -71,12 +71,12 @@ choose_name <-function(name, tabell){
    if (nrow(rad)>0){   #hvis rad-datasettet har et innhold, altså antall rader større enn 0
     tabell_name <- data.frame(rad$Varenavn, rad$Varetype, rad$Land, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
     names(tabell_name) <- substring(names(tabell_name),5) #removing the "rad." part of every colname
-    print(paste("Vi fant: ", nrow(tabell_name), "drikkevare(r) som inneholdt", name, "."))
+    print(paste("Vi fant: ", nrow(tabell_name), "drikkevare(r) som inneholdt", one_string, "."))
     return(tabell_name)
   }
   
   else {
-    print(paste("Vinmolopolet har dessverre ingen drikkevarer med navnet ", name, ". Vær så snill og prøv igjen: "))
+    print(paste("Vinmolopolet har dessverre ingen drikkevarer med navnet ", one_string, ". Vær så snill og prøv igjen: "))
     name <- readline(prompt = "Velg navn på drikkevaren du ønsker å finne: ")
     return(choose_name(name, tabell))
     }
@@ -156,7 +156,7 @@ choose_price <- function(pris_max, pris_min, tabell){
   return(choose_price(pris_max, pris_min, tabell))
   }
 
-}
+} 
 
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -219,7 +219,6 @@ choose_country <- function(country, tabell){
 #PASSER TIL FUNKSJON
 choose_fits <- function(fits, tabell){
   #Make it case insensitive:
-  fits<-gsub(",", "", fits)
   one_word<-fits
   fits <- tolower(as.list(scan(text=fits, what = ""))) #Småbokstaver og lager til liste
   fits <- fits[fits != "og"]  #fjerner ordene som ikke skal med:
@@ -235,8 +234,14 @@ choose_fits <- function(fits, tabell){
   }
   
   else {
+  #bruker for loop for at det skal filtreres for alle ordene brukeren har skrevet inn 
+  for (i in 1:length(fits)){
     rad <- rad[grep(fits[i], rad$Passertil,ignore.case = TRUE, value = F), ]
+  }
   
+  #Lager en dataramme av det ferdig filtrerte "rad"
+  tabell_fits <- data.frame(rad$Varenavn, rad$Varetype, rad$Land,rad$Volum, rad$Pris, rad$Passertil,rad$Vareurl)
+  names(tabell_fits) <- substring(names(tabell_fits),5)
   
   
   #hvis det er rader igjen etter filtreringen: 
@@ -260,8 +265,6 @@ full_function <- function(){
   Varenavn <- tolower(products$Varenavn)
   full_name<-helt_lik(name,products)
   eksakt<-as.numeric(name==Varenavn)
-  name_tabell <- choose_name(name,products)
-  
   
   
   if(sum(eksakt)>0){
@@ -269,13 +272,14 @@ full_function <- function(){
  }
 
   #FORTSETT HER- FÅR 17 MATCH ISTEDNEFOR 2
+  
    else if (nrow(name_tabell)==1){ #hvis det bare er en av dette navnet, unødvendig å gjennom resten av spm
-     return(name_tabell)
+    return(name_tabell)
   }
 
   
   else{
- 
+  name_tabell <- choose_name(name,products)
   pris_max <- readline(prompt=paste0("Prisene hos oss varierer fra ",min_price," til ",max_price,".", " Skriv inn din maks pris: "))
   pris_min <- readline(prompt=paste0("Skriv inn din minimum pris: "))
   
@@ -300,42 +304,21 @@ full_function <- function(){
       }
     }
   }
-  }
+  
+
+ }
 }
   
 full_function()
 
 #KOMMENTARER FRA STINA
 #DRITBRA, men her har noe vi kan jobbe videre med:
+    #- hvis en varetype ikke har noe i kolonnen "passer til", slik som feks vodka, hopp over?
+    #- fits-funksjonen funker ikke å hoppe over, kommer error- 
     #- lage en loop til choose_name og choose_type  slik  du gjorde i fits-funksjonen
     # for  at man ikke trenger å skrive i riktig rekkefølge?
 
- 
-
-
-
-#bettan sitt   
-for (i in nrow(country_tabell)){
-  sumrow = 0 
-  row = str_length(str_trim(country_tabell$Passertil[i]))
-  sumrow = sumrow + row
-  
-}
-#Lagt til bettan sitt
-if (sumrow != 0){
-  fits <- readline(prompt = "Hva ønsker du at drikkevaren skal passe bra til: ")
-  fits_tabell <- choose_fits(fits, country_tabell)
-  return(fits_tabell)}
-
-}
-
-
-
-
-else {
-  tabell <- country_tabell %>% select(-Passertil) #Fjerner kolonnen med passer til siden det ikke er noe der
-  return (tabell)
-}
+    
 
 
   
