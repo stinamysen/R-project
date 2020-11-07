@@ -8,7 +8,6 @@ library(tidyverse)
 library(dplyr) #rename
 library(shiny)#filter name function
 library(stringr)
-library(anytime) #endre tid
 #----------------------------------------------------------------------------------------------------------------------
 #Since the data at vinmonopolet is changing everyday, we use the data.table library and the fread()-function 
 #found this from https://www.r-bloggers.com/2015/03/getting-data-from-an-online-source/
@@ -20,41 +19,47 @@ products <- produkter %>%
   select(-HovedGTIN,-Miljosmart_emballasje, -Gluten_lav_pa, -AndreGTINs) %>% 
   filter(Alkohol!="0,00") %>%
   unite('Passertil', Passertil01,Passertil02,Passertil03, sep = " ", remove=F ) %>% #Legger sammen passertil kolonnene
-  mutate(Datotid= anytime(Datotid)) %>% #for å få finere tid-format
+  #mutate(Datotid= anytime(Datotid)) %>% #for å få finere tid-format
   mutate(Pris= as.numeric(gsub(",",".",Pris)))# %>%  #changing the separator , to . and making numeric
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-################
-tabell1 <- data.frame(products$Varenavn, products$Pris, products$Varetype, products$Passertil, products$Land)
-################
-
+#----------------------------------------------------------------------------------------------------------------------
 #NAME FUNKSJON 
+#må gjøres:
+#- hvis kun rad=1- still ingen fler spørmsål
+#- få vekk "read 1 items"
+
+
 choose_name <-function(name, tabell){
-  name <- tolower(name)
+  name<-tolower(name) #for at ikke outputen "vi fant ..... drikkervarer som inneholdt..." skal bli gjentatt flere ganger hvis brukeren skriver fler enn 1 ord
+  list_name <- tolower(as.list(scan(text=name, what = ","))) #Småbokstaver og lager til liste
   Varenavn <- tolower(tabell$Varenavn)
-  rad <- tabell[grep(name, tabell$Varenavn, ignore.case = T, value = F), ]# et datasett hvor inputen og datasettet matcher
   
-  if(name==""){
+  rad <- tabell[grep(list_name[1], tabell$Varenavn,ignore.case = TRUE, value = F), ]
+  # et datasett hvor inputen og datasettet matcher
+  
+  
+  if (length(list_name)==0){
     return(tabell)
   }
-  
-  else if (nrow(rad)>=0){   #hvis rad-datasettet har et innhold, altså antall rader større enn 0
-    tabell_name <- data.frame(rad$Varenavn, rad$Varetype, rad$Land, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
-    names(tabell_name) <- substring(names(tabell_name),5) #removing the "rad." part of every colname
-    print(paste("Vi fant: ", nrow(tabell_name), "drikkevare(r) som inneholdt", name, "."))
-    return(tabell_name)
-  }
-  
   else {
-    print(paste("Vinmolopolet har dessverre ingen drikkevarer med navnet ", name, ". Vær så snill og prøv igjen: "))
-    name <- readline(prompt = "Velg navn på drikkevaren du ønsker å finne: ")
-    return(choose_name(name, tabell))
+    for (i in 1:length(list_name)){
+      rad[grep(list_name[i], rad$Varenavn,ignore.case = TRUE, value = F), ]
+    }
+    
+    
+    if (nrow(rad)>0){   #hvis rad-datasettet har et innhold, altså antall rader større enn 0
+      tabell_name <- data.frame(rad$Varenavn, rad$Varetype, rad$Land, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
+      names(tabell_name) <- substring(names(tabell_name),5) #removing the "rad." part of every colname
+      print(paste("Vi fant: ", nrow(tabell_name), "drikkevare(r) som inneholdt", name, "."))
+      return(tabell_name)
+    }
+    
+    else {
+    }
   }
-}
+} 
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 
 #PRIS FUNKSJON
 #Lager min- og makspris for å gi brukeren et interval for pris
@@ -123,7 +128,7 @@ choose_price <- function(pris_max, pris_min, tabell){
     return(choose_price(pris_max, pris_min, tabell))
   }
   
-} 
+}
 
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -147,10 +152,9 @@ choose_type <- function(type, tabell){
     return (tabell_type)
   } 
   else {
-    print("Vinmonopolet har dessverre ingen drikkevarer av denne typen, vær så snill og prøv igjen: ")
-    type <- readline(prompt = "Velg hva slags type drikkevarer du ønsker: ")
-    return(choose_type(type, tabell))
+    return(NULL)
   }
+  
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -161,7 +165,7 @@ choose_country <- function(country, tabell){
   country <- tolower(country)
   land <- tolower(tabell$Land)
   
-  if(country==""){
+  if(country=="ingen preferanser"){
     return(tabell)
   }
   else if (country %in% land){
@@ -173,9 +177,7 @@ choose_country <- function(country, tabell){
   } 
   
   else {
-    print(paste("Vinmonopolet har dessverre ingen drikkevarer fra ", country, " vær så snill og prøv igjen: "))
-    country <- readline(prompt = "Hvilket land ønsker du at varene skal være fra? ")
-    return(choose_country(country, tabell))
+    #TROR NOE MÅ HER MTP ALERT
   }
 }
 
@@ -186,7 +188,9 @@ choose_country <- function(country, tabell){
 #PASSER TIL FUNKSJON
 choose_fits <- function(fits, tabell){
   #Make it case insensitive:
-  fits <- tolower(as.list(scan(text=fits, what = ","))) #Småbokstaver og lager til liste
+  fits<-gsub(",", "", fits)
+  one_word<-fits
+  fits <- tolower(as.list(scan(text=fits, what = ""))) #Småbokstaver og lager til liste
   fits <- fits[fits != "og"]  #fjerner ordene som ikke skal med:
   fits <- fits[fits != "and"] #fjerner ordene som ikke skal med:
   
@@ -195,30 +199,25 @@ choose_fits <- function(fits, tabell){
   
   rad <- tabell[grep(fits[1], tabell$Passertil,ignore.case = TRUE, value = F), ]
   
-  if(fits == ""){
+  if(length(fits)==0){
     return(tabell)
   }
   
   else {
-    #bruker for loop for at det skal filtreres for alle ordene brukeren har skrevet inn 
     for (i in 1:length(fits)){
-      rad <- rad[grep(fits[i], rad$Passertil,ignore.case = TRUE, value = F), ]
+      rad[grep(fits[i], rad$Passertil,ignore.case = TRUE, value = F), ]
     }
-    
-    #Lager en dataramme av det ferdig filtrerte "rad"
-    tabell_fits <- data.frame(rad$Varenavn, rad$Varetype, rad$Land,rad$Volum, rad$Pris, rad$Passertil,rad$Vareurl)
-    names(tabell_fits) <- substring(names(tabell_fits),5)
-    
     
     #hvis det er rader igjen etter filtreringen: 
     if (nrow(rad) != 0){
-      print(paste("Vi fant ", nrow(rad), "drikkevarer som passer til", fits))
+      tabell_fits <- data.frame(rad$Varenavn, rad$Varetype, rad$Land, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
+      names(tabell_fits) <- substring(names(tabell_fits),5) #removing the "rad." part of every colname
+      print(paste("Vi fant ", nrow(rad), "drikkevarer som passer til", one_word))
       return (tabell_fits)
     }
+    
     else{
-      print(paste("Vi fant dessverre ingen varer som passer til", fits, ", vær så snill og prøv igjen: "))
-      fits <- readline(prompt = "Hva ønsker du at drikkevaren skal passe bra til: ")
-      return (choose_fits(fits, tabell))
+      return (tabell)
     }
   }
 }
@@ -226,48 +225,88 @@ choose_fits <- function(fits, tabell){
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #HOVEDFUNKSJON
-full_function <- function(){
-  name <- readline(prompt = "Velg navn på drikkevaren du ønsker å finne: ")
+full_function <- function(name,pris_max, pris_min, type,land,passertil){
   
-  name_tabell <- choose_name(name, products)
+  name_tabell <- choose_name(name,products)
   
-  pris_max <- readline(prompt=paste0("Prisene hos oss varierer fra ",min_price," til ",max_price,".", " Skriv inn din maks pris: "))
-  pris_min <- readline(prompt=paste0("Skriv inn din minimum pris: "))
   
-  pris_tabell <- choose_price(pris_max, pris_min, name_tabell)
+  if (nrow(name_tabell)==1){ #hvis det bare er en av dette navnet, unødvendig å gjennom resten av spm
+    return(name_tabell)
+  }
   
-  type <- readline(prompt = "Velg hva slags type drikkevarer du ønsker: ")
-  type_tabell <- choose_type(type, pris_tabell)
   
-  country <- readline(prompt = "Hvilket land ønsker du at varene skal være fra? ")
-  country_tabell <- choose_country(country, type_tabell)
-  
-  fits <- readline(prompt = "Hva ønsker du at drikkevaren skal passe bra til: ")
-  fits_tabell <- choose_fits(fits, country_tabell)
-  
-  return(fits_tabell)
+  else{
+    
+    pris_tabell <- choose_price(pris_max, pris_min, name_tabell)
+    if(nrow(pris_tabell)==1){
+      return(pris_tabell)
+    }
+    else{
+      type <- readline(prompt = "Velg hva slags type drikkevarer du ønsker: ")
+      type_tabell <- choose_type(type, pris_tabell)
+      
+      if(nrow(type_tabell)==1){
+        return(type_tabell)}
+      
+      else{
+        country <- readline(prompt = "Hvilket land ønsker du at varene skal være fra? ")
+        country_tabell <- choose_country(country, type_tabell)
+        
+        if(nrow(country_tabell)==1){
+          return(country_tabell)
+        }
+        
+        else{
+          for (i in nrow(country_tabell)){
+            sumrow = 0 
+            row = str_length(str_trim(country_tabell$Passertil[i]))
+            sumrow = sumrow + row
+          }
+          
+          if (sumrow != 0){
+            fits <- readline(prompt = "Hva ønsker du at drikkevaren skal passe bra til: ")
+            fits_tabell <- choose_fits(fits, country_tabell)
+            return(fits_tabell)
+          }
+          else {
+            tabell <- country_tabell %>% select(-Passertil) #Fjerner kolonnen med passer til siden det ikke er noe der
+            return (tabell)
+          }
+        }
+      }
+    }
+  }
 }
 
 full_function()
 
 
-#KOMMENTARER FRA STINA
-#DRITBRA, men her har noe vi kan jobbe videre med:
-#- hvis en varetype ikke har noe i kolonnen "passer til", slik som feks vodka, hopp over?
-#- fits-funksjonen funker ikke å hoppe over, kommer error- 
-#- lage en loop til choose_name og choose_type  slik  du gjorde i fits-funksjonen
-# for  at man ikke trenger å skrive i riktig rekkefølge?
+no_match <- function(input) {
+  if (!(input %in% pris_tabell)) {
+    "Choose another liquor or leave the space open. "
+    return (pris_tabell)
+  } else if (input == "") {
+    return (pris_tabell)
+  } else {
+    return (type_tabell)
+  }
+}
 
-
-
-
-
+#----------------------------------------------------------------------------------------------------------------------------------
+#SHINY APP
 
 #Define UI
-library(shiny)
 library(shinythemes)
+library(shinyalert)
+library(shinyjs)
+library(shinyBS)
+
 ui <- fluidPage(
   theme = shinytheme("cerulean"),
+  
+  #useShinyalert(),
+  #useShinyjs(),
+  #bsAlert(),
   
   ################Header panel###################################################
   headerPanel("Vinmonopolets app"),
@@ -278,96 +317,109 @@ ui <- fluidPage(
     
     textInput(
       inputId = "name", #name will be sent to the server
-      label = "Navn på alkoholen:", ""
+      label = "Navn på alkoholen:", "",
     ), 
     
-    # Her viser appen en slidebar hvor han kan velge på pris
+    # Prisintervall
     sliderInput(
       inputId = "pris", 
-      label = "Prisintervall:", "",
+      label = "Prisintervall: ",
       min = min_price,
       max = max_price,
-      value = c(500, 1000),
-      step = 50
+      value = c(min, max),
     ),
     
-    # Her viser appen de forskjellige typene alkohol man kan velge mellom
+    textInput(
+      inputId = "type", #name will be sent to the server
+      label = "Type alkohol:", "",
+    ), 
+    
     selectInput(
-      inputId = "type",
-      label = "Type alkohol", "",
-      choices = c("", products$Varetype)
+      inputId = "land", #name will be sent to the server
+      label = "Hvor skal drikkevaren være fra?:", "",
+      choices = c("Ingen preferanser", products$Land),
+    ), 
+    
+    #Filter på passer til
+    textInput(
+      inputId = "passertil",
+      label = "Hva vil du drikkevaren skal passe til: ", "",
     ),
-    
-    #Filter på land
-    selectInput(
-      inputId = "land",
-      label = "Hvilket land ønsker du: ", "",
-      choices = c("", products$Land)
-    ),
-    
-    #Filter på hva den passer til
-    #radioButtons(
-     # inputId = "passertil",
-      #label = "Hva ønsker du at drikken skal passe til: ", "",
-      #choices = 
-    #),
-    
-    
-    #Her hadde det vært nice med bulletmeny, men litt usikker på hvordan man mekker det
-    
     
     #Submitknapp når man er ferdig med å filtrere
     actionButton(
-      inputId = "submit",
+      inputId = "full_f",
       label = "Ferdig"
     )
-  ), #Sidebarpanel
+  ),
   
   ##################Main panel ###################################################
+  #Displaying outputs
   mainPanel(
     h1("Liste over alkohol"),
-    
-    
-    #tableOutput("tabell") --> tabellen laget i hovedfunksjonen over
-    
-    
-    #Dette er bare noe fra youtubevideoen, men tenker at mainPanel må være tabellen med drikke 
-    #h4("Navn"),
-    #verbatimTextOutput("txtout"), #txtOut, generated from the server
-    #h4("Minimumspris"),
-    tableOutput(outputId = "tabell")
-    
-  )#Mainbarpanel
-  
-) #fluidpage
+    dataTableOutput("vin_table")
+  )
+)
 
 
-#Define server function
+#Define server function - logic required to do the output
 server <- function(input, output){
-  output$tabell = renderTable({
-    filtered <- 
-      tabell1 %>% 
-      #if(input$name = " "){
-        filter(
-          tabell1$products.Varetype == input$type,
-          tabell1$products.Pris >= input$pris[1],
-          tabell1$products.Pris <= input$pris[2],
-          tabell1$products.Land == input$land
-      )#}
-      #else{
-       # filter(
-        #  tabell$products.Varenavn == input$name
-      #)} 
-    filtered
+  
+  mypar <- eventReactive(input$full_f, {
+    name <- input$name
+    pris_max <- as.numeric(input$pris[2])
+    pris_min <- as.numeric(input$pris[1])
+    type <- input$type
+    land <- input$land
+    passertil <- input$passertil
+    
+    
+    name_tabell <- choose_name(name, products)
+    pris_tabell <- choose_price(pris_max, pris_min, name_tabell)
+    no_match(type)
+    type_tabell <- choose_type(type, pris_tabell)
+    
+    #    if type %in% pris_tabell{
+    #      type_tabell <- choose_type(type, pris_tabell)
+    #    }
+    #    else 
+    #      ALERT
+    
+    #FORSØK PÅ ALERT HVIS INPUT IKKE ER TILGJENGELIG I VARELAGER
+    
+    #    observeEvent(input$type, {
+    #      if (is.null(type_tabell))
+    #        type_tabell <- pris_tabell
+    #        return()
+    #      id <<- showNotification(paste("hei"),duration=0)
+    #    })
+    
+    
+    #    output$alert <- renderText({
+    #      if (!(is.na(type_tabell))){
+    #        createAlert(session, "alert", "typealert", content = "hei")
+    #      }
+    #      else{
+    #        closeAlert(session, "typealert")
+    #        return(type_tabell)
+    #      }
+    #    })
+    
+    country_tabell <- choose_country(land, type_tabell)
+    fits_tabell <- choose_fits(passertil, country_tabell)
+    
+    return(fits_tabell)
+  }
+  
+  )
+  
+  output$vin_table <- renderDataTable({
+    mypar()
   })
-
-} #Server
+}
 
 #create shiny object
-shinyApp(ui = ui, server = server) 
-
-
-
+shinyApp(ui, server)
 
 
 
