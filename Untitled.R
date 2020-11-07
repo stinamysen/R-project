@@ -25,6 +25,10 @@ products <- produkter %>%
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+################
+tabell1 <- data.frame(products$Varenavn, products$Pris, products$Varetype, products$Passertil, products$Land)
+################
+
 #NAME FUNKSJON 
 choose_name <-function(name, tabell){
   name <- tolower(name)
@@ -283,7 +287,7 @@ ui <- fluidPage(
       label = "Prisintervall:", "",
       min = min_price,
       max = max_price,
-      value = 1000,
+      value = c(500, 1000),
       step = 50
     ),
     
@@ -291,17 +295,24 @@ ui <- fluidPage(
     selectInput(
       inputId = "type",
       label = "Type alkohol", "",
-      choices = products$Varetype
+      choices = c("", products$Varetype)
     ),
     
     #Filter på land
     selectInput(
       inputId = "land",
       label = "Hvilket land ønsker du: ", "",
-      choices = products$Land,
+      choices = c("", products$Land)
     ),
     
     #Filter på hva den passer til
+    #radioButtons(
+     # inputId = "passertil",
+      #label = "Hva ønsker du at drikken skal passe til: ", "",
+      #choices = 
+    #),
+    
+    
     #Her hadde det vært nice med bulletmeny, men litt usikker på hvordan man mekker det
     
     
@@ -314,14 +325,17 @@ ui <- fluidPage(
   
   ##################Main panel ###################################################
   mainPanel(
-    h1("Liste over alkohol")
+    h1("Liste over alkohol"),
+    
+    
+    #tableOutput("tabell") --> tabellen laget i hovedfunksjonen over
     
     
     #Dette er bare noe fra youtubevideoen, men tenker at mainPanel må være tabellen med drikke 
     #h4("Navn"),
     #verbatimTextOutput("txtout"), #txtOut, generated from the server
     #h4("Minimumspris"),
-    #plotOutput(outputId = "distplot")
+    tableOutput(outputId = "tabell")
     
   )#Mainbarpanel
   
@@ -330,21 +344,32 @@ ui <- fluidPage(
 
 #Define server function
 server <- function(input, output){
-  output$txtout <- renderText({
-    paste( input$name, sep = " ")
+  output$tabell = renderTable({
+    filtered <- 
+      tabell1 %>% 
+      #if(input$name = " "){
+        filter(
+          tabell1$products.Varetype == input$type,
+          tabell1$products.Pris >= input$pris[1],
+          tabell1$products.Pris <= input$pris[2],
+          tabell1$products.Land == input$land
+      )#}
+      #else{
+       # filter(
+        #  tabell$products.Varenavn == input$name
+      #)} 
+    filtered
   })
-  
-  #output$distplot <- renderPlot({
-  # x <- products$Pris
-  #pris <- seq(min(x), max(x), length.out = input$pris + 1)
-  
-  #hist(x, breaks = pris, col = "#75AADB", border = "black", 
-  # xlab = "price",
-  #main = "histogram of prices")
-  
-  #})
+
 } #Server
 
 #create shiny object
 shinyApp(ui = ui, server = server) 
+
+
+
+
+
+
+
  
