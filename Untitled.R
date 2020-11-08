@@ -144,7 +144,6 @@ choose_country <- function(country, tabell){
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
 #PASSER TIL FUNKSJON
 choose_fits <- function(fits, tabell){
   #Make it case insensitive:
@@ -181,64 +180,6 @@ choose_fits <- function(fits, tabell){
     }
   }
 }
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-#HOVEDFUNKSJON
-full_function <- function(name,pris_max, pris_min, type,land,passertil){
-  
-  name_tabell <- choose_name(name,products)
-  
-
-  if (nrow(name_tabell)==1){ #hvis det bare er en av dette navnet, unødvendig å gjennom resten av spm
-    return(name_tabell)
-  }
-  
-  
-  else{
-    
-    pris_tabell <- choose_price(pris_max, pris_min, name_tabell)
-    if(nrow(pris_tabell)==1){
-      return(pris_tabell)
-    }
-    else{
-      type <- readline(prompt = "Velg hva slags type drikkevarer du ønsker: ")
-      type_tabell <- choose_type(type, pris_tabell)
-      
-      if(nrow(type_tabell)==1){
-        return(type_tabell)}
-      
-      else{
-        country <- readline(prompt = "Hvilket land ønsker du at varene skal være fra? ")
-        country_tabell <- choose_country(country, type_tabell)
-        
-        if(nrow(country_tabell)==1){
-          return(country_tabell)
-        }
-        
-        else{
-          for (i in nrow(country_tabell)){
-            sumrow = 0 
-            row = str_length(str_trim(country_tabell$Passertil[i]))
-            sumrow = sumrow + row
-          }
-          
-          if (sumrow != 0){
-            fits <- readline(prompt = "Hva ønsker du at drikkevaren skal passe bra til: ")
-            fits_tabell <- choose_fits(fits, country_tabell)
-            return(fits_tabell)
-          }
-          else {
-            tabell <- country_tabell %>% select(-Passertil) #Fjerner kolonnen med passer til siden det ikke er noe der
-            return (tabell)
-          }
-        }
-      }
-    }
-  }
-}
-
-full_function()
 
 #----------------------------------------------------------------------------------------------------------------------------------
 #SHINY APP
