@@ -20,8 +20,14 @@ products <- produkter %>%
   filter(Alkohol!="0,00") %>%
   unite('Passertil', Passertil01,Passertil02,Passertil03, sep = " ", remove=F ) %>% #Legger sammen passertil kolonnene
   mutate(Datotid= anytime(Datotid)) %>% #for å få finere tid-format
-  mutate(Pris= as.numeric(gsub(",",".",Pris)))# %>%  #changing the separator , to . and making numeric
+  mutate(Pris= as.numeric(gsub(",",".",Pris))) %>% #changing the separator , to . and making numeric
+  mutate(Passertil=gsub("og","", Passertil)) %>% 
+  mutate(Passertil=gsub(",","", Passertil)) %>% 
+  mutate(Passertil=tolower(gsub("  "," ", Passertil)))
+  
+ 
 
+products
 #----------------------------------------------------------------------------------------------------------------------
 #NAME FUNKSJON 
 
@@ -135,17 +141,14 @@ choose_country <- function(country, tabell){
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 #PASSER TIL FUNKSJON
 choose_fits <- function(fits, tabell){
-  #Make it case insensitive:
-  fits<-gsub(",", "", fits)
   one_word<-fits
-  fits <- tolower(as.list(scan(text=fits, what = ""))) #Småbokstaver og lager til liste
-  fits <- fits[fits != "og"]  #fjerner ordene som ikke skal med:
-  fits <- fits[fits != "and"] #fjerner ordene som ikke skal med:
-  
+
   
   passertil <- tolower(tabell$Passertil)
   
   rad <- tabell[grep(fits[1], tabell$Passertil,ignore.case = TRUE, value = F), ]
+  
+  
   
   if(length(fits)==0){
     return(tabell)
@@ -153,9 +156,10 @@ choose_fits <- function(fits, tabell){
 
   else {
     for (i in 1:length(fits)){
-      rad[grep(fits[i], rad$Passertil,ignore.case = TRUE, value = F), ]
+      rad<-rad[grep(fits[i], rad$Passertil,ignore.case = TRUE, value = F), ]
+      
     }
-  
+    
     #hvis det er rader igjen etter filtreringen: 
     if (nrow(rad) != 0){
       tabell_fits <- data.frame(rad$Varenavn, rad$Varetype, rad$Land, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
@@ -169,14 +173,34 @@ choose_fits <- function(fits, tabell){
     }
   }
 }
+choose_fits(fits,tabell)
 
 #----------------------------------------------------------------------------------------------------------------------------------
 #SHINY APP
 #Define UI
 library(shinythemes)
+<<<<<<< HEAD
+=======
+
+library(shinyalert)
+library(shinyjs)
+library(shinyBS)
+library(shinyFeedback)
+library(tcltk2)
+
+#Lage en vektor av alle unike ord i passertil-kolonnen
+fjern<-c("lyst", "kjøtt", "")
+vektor_passer<- products %>% pull(Passertil) %>% strsplit(" ") %>% unlist %>% unique() 
+vektor_passer<-append(vektor_passer[!vektor_passer%in%fjern],"lyst kjøtt")
+
+
+>>>>>>> checkbox_test
 
 '%then%' <- shiny:::'%OR%'
 
+
+#if (interactive()) { Denne if statementen fant jeg på nettet, ser ikke ut som den gjør noe forskjell
+#https://shiny.rstudio.com/reference/shiny/0.14/checkboxGroupInput.html?fbclid=IwAR3aICmOX4h3P0sDOzzYcw40KMyR1dzwBYVp7GD3zd-DcY49-w4oESoYHco
 ui <- fluidPage(
   theme = shinytheme("cerulean"),
   
@@ -210,17 +234,33 @@ ui <- fluidPage(
       label = "Hvor skal drikkevaren være fra?:", "",
       choices = c("Ingen preferanser", products$Land),
     ), 
+    checkboxGroupInput(
+      inputId = "passertil", 
+      label = "Hva vil du at drikkevaren skal passe til?",
+      choices=vektor_passer
+    ),
     
+<<<<<<< HEAD
     textInput(
       inputId = "passertil",
       label = "Hva vil du drikkevaren skal passe til: ", "",
     ),
+=======
+    #Filter på passer til
+    #textInput(
+     # inputId = "passertil",
+     # label = "Hva vil du drikkevaren skal passe til: ", "",
+    #),
+>>>>>>> checkbox_test
   
     actionButton(
       inputId = "full_f",
       label = "Ferdig"
     )
   ),
+ 
+  
+
   
 ##################Main panel ###################################################
 #Displaying outputs
@@ -229,6 +269,7 @@ ui <- fluidPage(
     dataTableOutput("vin_table")
   )
 )
+
 
 #Define server function - logic required to do the output
 server <- function(input, output){
@@ -242,7 +283,29 @@ server <- function(input, output){
     land <- input$land
     passertil <- input$passertil
     
+<<<<<<< HEAD
     name_tabell <- choose_name(name, products)
+=======
+
+    
+    
+   name_tabell <- choose_name(name, products)
+  pris_tabell <- choose_price(pris_max, pris_min, name_tabell)
+   
+  
+  #req(!(type%in%pris_tabell))
+
+  type_tabell <- choose_type(type, pris_tabell)
+    
+#    if type %in% pris_tabell{
+#      type_tabell <- choose_type(type, pris_tabell)
+#    }
+#    else 
+#      ALERT
+
+   name_tabell <- choose_name(name, products)
+
+>>>>>>> checkbox_test
     
     pris_tabell <- choose_price(pris_max, pris_min, name_tabell)
     type_tabell <- choose_type(type, pris_tabell)
@@ -255,8 +318,21 @@ server <- function(input, output){
         need(!is.null(fits_tabell)|| input$fits=='', 'Ingen varer som passer til ønsket mat innefor de gitte filtreringene. Vennligst prøv igjen eller la boksen stå tom.')
     )
     
+<<<<<<< HEAD
     return(fits_tabell)
   })
+=======
+
+   
+      country_tabell <- choose_country(land, type_tabell)
+      fits_tabell <- choose_fits(passertil, country_tabell)
+      
+      return(fits_tabell)
+
+  }
+  
+  )
+>>>>>>> checkbox_test
   
   #OUTPUT TABLE
   output$vin_table <- renderDataTable({
@@ -281,3 +357,4 @@ server <- function(input, output){
 
 #create shiny object
 shinyApp(ui, server) 
+#}
