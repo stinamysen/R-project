@@ -24,10 +24,6 @@ products <- produkter %>%
 
 #----------------------------------------------------------------------------------------------------------------------
 #NAME FUNKSJON 
-#må gjøres:
-#- hvis kun rad=1- still ingen fler spørmsål
-#- få vekk "read 1 items"
-
 
 choose_name <-function(name, tabell){
   name<-tolower(name) #for at ikke outputen "vi fant ..... drikkervarer som inneholdt..." skal bli gjentatt flere ganger hvis brukeren skriver fler enn 1 ord
@@ -61,12 +57,10 @@ choose_name <-function(name, tabell){
 } 
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 #PRIS FUNKSJON
 #Lager min- og makspris for å gi brukeren et interval for pris
 min_price <- round(min(products$Pris))#rounded minimum price 
 max_price <- round(max(products$Pris))#rounded maximum price
-
 
 choose_price <- function(pris_max, pris_min, tabell){
   
@@ -91,10 +85,7 @@ choose_price <- function(pris_max, pris_min, tabell){
   
 } 
 
-
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
 #VARETYPE FUNKSJON
 choose_type <- function(type, tabell){
   #Make it case insensitive:
@@ -119,8 +110,7 @@ choose_type <- function(type, tabell){
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-#Funksjon for hvilket land
+#LAND FUNKSJON
 choose_country <- function(country, tabell){
   #Make it case insensitive:
   country <- tolower(country)
@@ -142,9 +132,7 @@ choose_country <- function(country, tabell){
   }
 }
 
-
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 #PASSER TIL FUNKSJON
 choose_fits <- function(fits, tabell){
   #Make it case insensitive:
@@ -184,7 +172,6 @@ choose_fits <- function(fits, tabell){
 
 #----------------------------------------------------------------------------------------------------------------------------------
 #SHINY APP
-
 #Define UI
 library(shinythemes)
 
@@ -205,7 +192,6 @@ ui <- fluidPage(
       label = "Navn på alkoholen:", "",
     ), 
     
-    # Prisintervall
     sliderInput(
       inputId = "pris", 
       label = "Prisintervall: ",
@@ -225,13 +211,11 @@ ui <- fluidPage(
       choices = c("Ingen preferanser", products$Land),
     ), 
     
-    #Filter på passer til
     textInput(
       inputId = "passertil",
       label = "Hva vil du drikkevaren skal passe til: ", "",
     ),
   
-    #Submitknapp når man er ferdig med å filtrere
     actionButton(
       inputId = "full_f",
       label = "Ferdig"
@@ -249,8 +233,7 @@ ui <- fluidPage(
 #Define server function - logic required to do the output
 server <- function(input, output){
 
-  
-  #Full function
+#Full function
   mypar <- eventReactive(input$full_f, {
     name <- input$name
     pris_max <- as.numeric(input$pris[2])
@@ -273,10 +256,7 @@ server <- function(input, output){
     )
     
     return(fits_tabell)
-  }
-  
-  
-  )
+  })
   
   #OUTPUT TABLE
   output$vin_table <- renderDataTable({
@@ -297,7 +277,6 @@ server <- function(input, output){
     
     mypar()
     })
-  
 }
 
 #create shiny object
