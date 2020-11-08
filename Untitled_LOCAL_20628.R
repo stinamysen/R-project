@@ -24,6 +24,10 @@ products <- produkter %>%
 
 #----------------------------------------------------------------------------------------------------------------------
 #NAME FUNKSJON 
+#må gjøres:
+#- hvis kun rad=1- still ingen fler spørmsål
+#- få vekk "read 1 items"
+
 
 choose_name <-function(name, tabell){
   name<-tolower(name) #for at ikke outputen "vi fant ..... drikkervarer som inneholdt..." skal bli gjentatt flere ganger hvis brukeren skriver fler enn 1 ord
@@ -57,25 +61,25 @@ choose_name <-function(name, tabell){
 } 
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 #PRIS FUNKSJON
 #Lager min- og makspris for å gi brukeren et interval for pris
 min_price <- round(min(products$Pris))#rounded minimum price 
 max_price <- round(max(products$Pris))#rounded maximum price
 
+
 choose_price <- function(pris_max, pris_min, tabell){
-  
   pris_max_n <- as.numeric(pris_max)
   pris_min_n <- as.numeric(pris_min)
-
-  rad <- tabell %>% filter(Pris <= pris_max_n, Pris >= pris_min_n)
-
+  
+  rad <- tabell %>% filter(Pris <= (pris_max_n) && Pris >= (pris_min_n))
   
   #If they have a upper and lower limit, filter within these:
-  if (nrow(rad) != 0) {
+  if (nrow(rad)!=0) {
     
     pris_tabell <- data.frame(rad$Varenavn, rad$Varetype, rad$Land, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl) 
     names(pris_tabell) <- substring(names(pris_tabell),5)
-    
+    print(paste("Vi fant: ", nrow(rad), "drikkevarer i denne prisklassen"))
     return(pris_tabell)
   }
   
@@ -84,8 +88,12 @@ choose_price <- function(pris_max, pris_min, tabell){
   }
   
 } 
+choose_price(2000,20,products)
+
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 #VARETYPE FUNKSJON
 choose_type <- function(type, tabell){
   #Make it case insensitive:
@@ -110,7 +118,8 @@ choose_type <- function(type, tabell){
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#LAND FUNKSJON
+
+#Funksjon for hvilket land
 choose_country <- function(country, tabell){
   #Make it case insensitive:
   country <- tolower(country)
@@ -132,7 +141,9 @@ choose_country <- function(country, tabell){
   }
 }
 
+
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 #PASSER TIL FUNKSJON
 choose_fits <- function(fits, tabell){
   #Make it case insensitive:
@@ -172,10 +183,19 @@ choose_fits <- function(fits, tabell){
 
 #----------------------------------------------------------------------------------------------------------------------------------
 #SHINY APP
+
 #Define UI
 library(shinythemes)
+<<<<<<< HEAD
+library(shinyalert)
+library(shinyjs)
+library(shinyBS)
+library(shinyFeedback)
+library(tcltk2)
+=======
 
 '%then%' <- shiny:::'%OR%'
+>>>>>>> 84dec6b69ef1afd5238ec2daf4fd17113f770029
 
 ui <- fluidPage(
   theme = shinytheme("cerulean"),
@@ -192,6 +212,7 @@ ui <- fluidPage(
       label = "Navn på alkoholen:", "",
     ), 
     
+    # Prisintervall
     sliderInput(
       inputId = "pris", 
       label = "Prisintervall: ",
@@ -211,11 +232,13 @@ ui <- fluidPage(
       choices = c("Ingen preferanser", products$Land),
     ), 
     
+    #Filter på passer til
     textInput(
       inputId = "passertil",
       label = "Hva vil du drikkevaren skal passe til: ", "",
     ),
   
+    #Submitknapp når man er ferdig med å filtrere
     actionButton(
       inputId = "full_f",
       label = "Ferdig"
@@ -232,8 +255,8 @@ ui <- fluidPage(
 
 #Define server function - logic required to do the output
 server <- function(input, output){
-
-#Full function
+  
+  #Full function
   mypar <- eventReactive(input$full_f, {
     name <- input$name
     pris_max <- as.numeric(input$pris[2])
@@ -242,21 +265,57 @@ server <- function(input, output){
     land <- input$land
     passertil <- input$passertil
     
+<<<<<<< HEAD
+    
+    
     name_tabell <- choose_name(name, products)
+    pris_tabell <- choose_price(pris_max, pris_min, name_tabell)
+   
+  
+  req(!(type%in%pris_tabell))
+
+  type_tabell <- choose_type(type, pris_tabell)
+    
+#    if type %in% pris_tabell{
+#      type_tabell <- choose_type(type, pris_tabell)
+#    }
+#    else 
+#      ALERT
+=======
+    name_tabell <- choose_name(name, products)
+>>>>>>> 84dec6b69ef1afd5238ec2daf4fd17113f770029
     
     pris_tabell <- choose_price(pris_max, pris_min, name_tabell)
-    type_tabell <- choose_type(type, pris_tabell)
-    country_tabell <- choose_country(land, type_tabell)
-    fits_tabell <- choose_fits(passertil, country_tabell)
-    
     validate(
-      need(!is.null(pris_tabell), 'Prisklassen er ikke gyldig med den filtrerte drikkevare navnet. Vennligst prøv igjen.') %then%
-        need(!is.null(type_tabell) || input$type=='', 'Varetypen finnes ikke innenfor den gitte prisklassen og med det gitte navnet. Vennligst prøv igjen eller la boksen stå tom.') %then%
-        need(!is.null(fits_tabell)|| input$fits=='', 'Ingen varer som passer til ønsket mat innefor de gitte filtreringene. Vennligst prøv igjen eller la boksen stå tom.')
+      need(!is.null(pris_tabell), 'Finner ingen varer med den gitte filtreringen innefor denne prisklassen. Vennligst prøv igjen.')
     )
     
+    type_tabell <- choose_type(type, pris_tabell)
+    #Sjekker om tabellen er lik null - altså ingen typer som passer til filtreringen
+    validate(
+      need(!is.null(type_tabell) || input$type=='', 'Varetypen finnes ikke med den gitte filtreringen. Vennligst prøv igjen eller la boksen stå tom.')
+      )
+
+    #req(!(type%in%pris_tabell))
+    
+    country_tabell <- choose_country(land, type_tabell)
+    fits_tabell <- choose_fits(passertil, country_tabell)
+    validate(
+      need(!is.null(fits_tabell)|| input$fits=='', 'Ingen varer som passer til dette innenfor filtreringen. Vennligst prøv igjen eller la boksen stå tom.')
+      )
+    
+<<<<<<< HEAD
+   
+      country_tabell <- choose_country(land, type_tabell)
+      fits_tabell <- choose_fits(passertil, country_tabell)
+      
+      return(fits_tabell)
+=======
     return(fits_tabell)
-  })
+>>>>>>> 84dec6b69ef1afd5238ec2daf4fd17113f770029
+  }
+  
+  )
   
   #OUTPUT TABLE
   output$vin_table <- renderDataTable({
@@ -272,11 +331,14 @@ server <- function(input, output){
     
     validate(
       need(nrow(rad_name)!=0 || input$name=='', 'Varenavnet finnes ikke i vinmonolopoets lager. Vennligst prøv igjen eller la boksen stå tom.') %then%
-        need(nrow(rad_type)!=0 || input$type=='', 'Varetypen finnes ikke i vinmonolopoets lager. Vennligst prøv igjen eller la boksen stå tom.') 
+        need(nrow(rad_type)!=0 || input$type=='', 'Varetypen finnes ikke i vinmonolopoets lager. Vennligst prøv igjen eller la boksen stå tom.')
     )
+    
+    
     
     mypar()
     })
+  
 }
 
 #create shiny object

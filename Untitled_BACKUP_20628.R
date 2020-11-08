@@ -174,8 +174,16 @@ choose_fits <- function(fits, tabell){
 #SHINY APP
 #Define UI
 library(shinythemes)
+<<<<<<< HEAD
+library(shinyalert)
+library(shinyjs)
+library(shinyBS)
+library(shinyFeedback)
+library(tcltk2)
+=======
 
 '%then%' <- shiny:::'%OR%'
+>>>>>>> 84dec6b69ef1afd5238ec2daf4fd17113f770029
 
 ui <- fluidPage(
   theme = shinytheme("cerulean"),
@@ -242,7 +250,25 @@ server <- function(input, output){
     land <- input$land
     passertil <- input$passertil
     
+<<<<<<< HEAD
+    
+    
     name_tabell <- choose_name(name, products)
+    pris_tabell <- choose_price(pris_max, pris_min, name_tabell)
+   
+  
+  req(!(type%in%pris_tabell))
+
+  type_tabell <- choose_type(type, pris_tabell)
+    
+#    if type %in% pris_tabell{
+#      type_tabell <- choose_type(type, pris_tabell)
+#    }
+#    else 
+#      ALERT
+=======
+    name_tabell <- choose_name(name, products)
+>>>>>>> 84dec6b69ef1afd5238ec2daf4fd17113f770029
     
     pris_tabell <- choose_price(pris_max, pris_min, name_tabell)
     type_tabell <- choose_type(type, pris_tabell)
@@ -255,8 +281,22 @@ server <- function(input, output){
         need(!is.null(fits_tabell)|| input$fits=='', 'Ingen varer som passer til ønsket mat innefor de gitte filtreringene. Vennligst prøv igjen eller la boksen stå tom.')
     )
     
+<<<<<<< HEAD
+   
+      country_tabell <- choose_country(land, type_tabell)
+      fits_tabell <- choose_fits(passertil, country_tabell)
+      
+      return(fits_tabell)
+=======
     return(fits_tabell)
+<<<<<<< HEAD
+>>>>>>> 84dec6b69ef1afd5238ec2daf4fd17113f770029
+  }
+  
+  )
+=======
   })
+>>>>>>> 25d7ab4cc16d32569c105e1d0385c217c4315335
   
   #OUTPUT TABLE
   output$vin_table <- renderDataTable({
