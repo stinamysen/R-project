@@ -69,17 +69,19 @@ max_price <- round(max(products$Pris))#rounded maximum price
 
 
 choose_price <- function(pris_max, pris_min, tabell){
+  
   pris_max_n <- as.numeric(pris_max)
   pris_min_n <- as.numeric(pris_min)
-  
-  rad <- tabell %>% filter(Pris <= (pris_max_n) && Pris >= (pris_min_n))
+
+  rad <- tabell %>% filter(Pris <= pris_max_n, Pris >= pris_min_n)
+
   
   #If they have a upper and lower limit, filter within these:
-  if (nrow(rad)!=0) {
+  if (nrow(rad) != 0) {
     
     pris_tabell <- data.frame(rad$Varenavn, rad$Varetype, rad$Land, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl) 
     names(pris_tabell) <- substring(names(pris_tabell),5)
-    print(paste("Vi fant: ", nrow(rad), "drikkevarer i denne prisklassen"))
+    
     return(pris_tabell)
   }
   
@@ -88,7 +90,6 @@ choose_price <- function(pris_max, pris_min, tabell){
   }
   
 } 
-choose_price(2000,20,products)
 
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -247,6 +248,7 @@ ui <- fluidPage(
 
 #Define server function - logic required to do the output
 server <- function(input, output){
+
   
   #Full function
   mypar <- eventReactive(input$full_f, {
@@ -260,26 +262,19 @@ server <- function(input, output){
     name_tabell <- choose_name(name, products)
     
     pris_tabell <- choose_price(pris_max, pris_min, name_tabell)
-    validate(
-      need(!is.null(pris_tabell), 'Finner ingen varer med den gitte filtreringen innefor denne prisklassen. Vennligst prøv igjen.')
-    )
-    
     type_tabell <- choose_type(type, pris_tabell)
-    #Sjekker om tabellen er lik null - altså ingen typer som passer til filtreringen
-    validate(
-      need(!is.null(type_tabell) || input$type=='', 'Varetypen finnes ikke med den gitte filtreringen. Vennligst prøv igjen eller la boksen stå tom.')
-      )
-
-    #req(!(type%in%pris_tabell))
-    
     country_tabell <- choose_country(land, type_tabell)
     fits_tabell <- choose_fits(passertil, country_tabell)
+    
     validate(
-      need(!is.null(fits_tabell)|| input$fits=='', 'Ingen varer som passer til dette innenfor filtreringen. Vennligst prøv igjen eller la boksen stå tom.')
-      )
+      need(!is.null(pris_tabell), 'Prisklassen er ikke gyldig med den filtrerte drikkevare navnet. Vennligst prøv igjen.') %then%
+        need(!is.null(type_tabell) || input$type=='', 'Varetypen finnes ikke innenfor den gitte prisklassen og med det gitte navnet. Vennligst prøv igjen eller la boksen stå tom.') %then%
+        need(!is.null(fits_tabell)|| input$fits=='', 'Ingen varer som passer til ønsket mat innefor de gitte filtreringene. Vennligst prøv igjen eller la boksen stå tom.')
+    )
     
     return(fits_tabell)
   }
+  
   
   )
   
@@ -297,10 +292,8 @@ server <- function(input, output){
     
     validate(
       need(nrow(rad_name)!=0 || input$name=='', 'Varenavnet finnes ikke i vinmonolopoets lager. Vennligst prøv igjen eller la boksen stå tom.') %then%
-        need(nrow(rad_type)!=0 || input$type=='', 'Varetypen finnes ikke i vinmonolopoets lager. Vennligst prøv igjen eller la boksen stå tom.')
+        need(nrow(rad_type)!=0 || input$type=='', 'Varetypen finnes ikke i vinmonolopoets lager. Vennligst prøv igjen eller la boksen stå tom.') 
     )
-    
-    
     
     mypar()
     })
