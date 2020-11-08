@@ -179,8 +179,6 @@ choose_fits(fits,tabell)
 #SHINY APP
 #Define UI
 library(shinythemes)
-<<<<<<< HEAD
-=======
 
 library(shinyalert)
 library(shinyjs)
@@ -194,7 +192,7 @@ vektor_passer<- products %>% pull(Passertil) %>% strsplit(" ") %>% unlist %>% un
 vektor_passer<-append(vektor_passer[!vektor_passer%in%fjern],"lyst kjøtt")
 
 
->>>>>>> checkbox_test
+
 
 '%then%' <- shiny:::'%OR%'
 
@@ -239,19 +237,8 @@ ui <- fluidPage(
       label = "Hva vil du at drikkevaren skal passe til?",
       choices=vektor_passer
     ),
-    
-<<<<<<< HEAD
-    textInput(
-      inputId = "passertil",
-      label = "Hva vil du drikkevaren skal passe til: ", "",
-    ),
-=======
-    #Filter på passer til
-    #textInput(
-     # inputId = "passertil",
-     # label = "Hva vil du drikkevaren skal passe til: ", "",
-    #),
->>>>>>> checkbox_test
+
+
   
     actionButton(
       inputId = "full_f",
@@ -283,56 +270,28 @@ server <- function(input, output){
     land <- input$land
     passertil <- input$passertil
     
-<<<<<<< HEAD
+
     name_tabell <- choose_name(name, products)
-=======
-
-    
-    
-   name_tabell <- choose_name(name, products)
-  pris_tabell <- choose_price(pris_max, pris_min, name_tabell)
-   
-  
-  #req(!(type%in%pris_tabell))
-
-  type_tabell <- choose_type(type, pris_tabell)
-    
-#    if type %in% pris_tabell{
-#      type_tabell <- choose_type(type, pris_tabell)
-#    }
-#    else 
-#      ALERT
-
-   name_tabell <- choose_name(name, products)
-
->>>>>>> checkbox_test
-    
     pris_tabell <- choose_price(pris_max, pris_min, name_tabell)
     type_tabell <- choose_type(type, pris_tabell)
     country_tabell <- choose_country(land, type_tabell)
     fits_tabell <- choose_fits(passertil, country_tabell)
     
     validate(
-      need(!is.null(pris_tabell), 'Prisklassen er ikke gyldig med den filtrerte drikkevare navnet. Vennligst prøv igjen.') %then%
+      need(!is.null(pris_tabell), 'Prisklassen er ikke gyldig med den filtrerte drikkevarenavnet. Vennligst prøv igjen.') %then%
         need(!is.null(type_tabell) || input$type=='', 'Varetypen finnes ikke innenfor den gitte prisklassen og med det gitte navnet. Vennligst prøv igjen eller la boksen stå tom.') %then%
         need(!is.null(fits_tabell)|| input$fits=='', 'Ingen varer som passer til ønsket mat innefor de gitte filtreringene. Vennligst prøv igjen eller la boksen stå tom.')
     )
     
-<<<<<<< HEAD
-    return(fits_tabell)
-  })
-=======
-
-   
-      country_tabell <- choose_country(land, type_tabell)
-      fits_tabell <- choose_fits(passertil, country_tabell)
-      
-      return(fits_tabell)
-
-  }
+return(fits_tabell)
   
-  )
->>>>>>> checkbox_test
+  })
+
+
+  
+  
+  
+
   
   #OUTPUT TABLE
   output$vin_table <- renderDataTable({
@@ -357,4 +316,4 @@ server <- function(input, output){
 
 #create shiny object
 shinyApp(ui, server) 
-#}
+
