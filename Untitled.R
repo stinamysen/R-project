@@ -152,7 +152,7 @@ choose_type <- function(type, tabell){
     return (tabell_type)
   } 
   else {
-   return(NULL)
+   return("Ingen varer med det gitte navnet. Vennligst prøv igjen eller la boksten stå tom.")
       }
     
 }
@@ -292,10 +292,6 @@ library(shinyBS)
 ui <- fluidPage(
   theme = shinytheme("cerulean"),
   
-  #useShinyalert(),
-  #useShinyjs(),
-  #bsAlert(),
-  
   ################Header panel###################################################
   headerPanel("Vinmonopolets app"),
   
@@ -319,7 +315,7 @@ ui <- fluidPage(
  
     textInput(
       inputId = "type", #name will be sent to the server
-      label = "Type alkohol:", "",
+      label = "Type alkohol:", ""
     ), 
     
     selectInput(
@@ -345,14 +341,32 @@ ui <- fluidPage(
 #Displaying outputs
   mainPanel(
     h1("Liste over alkohol"),
-    dataTableOutput("vin_table")
+    dataTableOutput("vin_table"),
+    textOutput("error_name"),
+    textOutput("error_type")
   )
 )
-
 
 #Define server function - logic required to do the output
 server <- function(input, output){
   
+  #IF NAME NOT IN DATAFRAME
+  name <- reactive({
+    if ((!input$name %in% products) && (input$name != ""))
+      return("Ingen varer med det gitte navnet. Vennligst prøv igjen eller la boksten stå tom.")
+  })
+  
+  
+  #IF TYPE NOT IN DATAFRMA
+  type <- reactive({
+    if ((!input$type %in% products) && (input$type != ""))
+      return("Varetypen er dessverre ikke tilgjengelig hos Vinmonopolet. Prøv igjen eller la boksen stå tom. ")
+  })
+  
+  
+  
+  
+  #Full function
   mypar <- eventReactive(input$full_f, {
     name <- input$name
     pris_max <- as.numeric(input$pris[2])
@@ -365,44 +379,32 @@ server <- function(input, output){
     name_tabell <- choose_name(name, products)
     pris_tabell <- choose_price(pris_max, pris_min, name_tabell)
     type_tabell <- choose_type(type, pris_tabell)
+
+    req(!(type%in%pris_tabell))
     
-#    if type %in% pris_tabell{
-#      type_tabell <- choose_type(type, pris_tabell)
-#    }
-#    else 
-#      ALERT
-    
-    #FORSØK PÅ ALERT HVIS INPUT IKKE ER TILGJENGELIG I VARELAGER
-    
-#    observeEvent(input$type, {
-#      if (is.null(type_tabell))
-#        type_tabell <- pris_tabell
-#        return()
-#      id <<- showNotification(paste("hei"),duration=0)
-#    })
-    
-    
-#    output$alert <- renderText({
-#      if (!(is.na(type_tabell))){
-#        createAlert(session, "alert", "typealert", content = "hei")
-#      }
-#      else{
-#        closeAlert(session, "typealert")
-#        return(type_tabell)
-#      }
-#    })
-    
-      country_tabell <- choose_country(land, type_tabell)
-      fits_tabell <- choose_fits(passertil, country_tabell)
-      
-      return(fits_tabell)
+    country_tabell <- choose_country(land, type_tabell)
+    fits_tabell <- choose_fits(passertil, country_tabell)
+    return(fits_tabell)
   }
   
   )
   
+  #OUTPUT NAME
+   output$error_name <- renderText({
+     name() 
+     })
+   
+  #OUTPUT TYPE
+  output$error_type <- renderText({
+    type()
+    })
+  
+  
+  #OUTPUT TABLE
   output$vin_table <- renderDataTable({
     mypar()
-  })
+    })
+  
 }
 
 #create shiny object
