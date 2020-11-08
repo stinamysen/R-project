@@ -186,17 +186,23 @@ choose_fits <- function(fits, tabell){
 
 #Define UI
 library(shinythemes)
-<<<<<<< HEAD
+
 library(shinyalert)
 library(shinyjs)
 library(shinyBS)
 library(shinyFeedback)
 library(tcltk2)
-=======
+
+fjern<-c("lyst", "kjøtt", "og")
+vektor_passer<- products %>% pull(Passertil) %>% strsplit(" ") %>% unlist %>% unique() %>% tolower()
+vektor_passer<-append(vektor_passer[!vektor_passer%in%fjern],"lyst kjøtt")
+
+
 
 '%then%' <- shiny:::'%OR%'
->>>>>>> 84dec6b69ef1afd5238ec2daf4fd17113f770029
 
+
+if (interactive()) {
 ui <- fluidPage(
   theme = shinytheme("cerulean"),
   
@@ -244,6 +250,10 @@ ui <- fluidPage(
       label = "Ferdig"
     )
   ),
+  checkboxGroupInput("passertil", "Sjekke hvilke drikker hvor dette passer til:",vektor_passer
+  ),
+  
+  tableOutput("data"),
   
 ##################Main panel ###################################################
 #Displaying outputs
@@ -252,6 +262,7 @@ ui <- fluidPage(
     dataTableOutput("vin_table")
   )
 )
+
 
 #Define server function - logic required to do the output
 server <- function(input, output){
@@ -265,7 +276,7 @@ server <- function(input, output){
     land <- input$land
     passertil <- input$passertil
     
-<<<<<<< HEAD
+
     
     
     name_tabell <- choose_name(name, products)
@@ -281,9 +292,9 @@ server <- function(input, output){
 #    }
 #    else 
 #      ALERT
-=======
+
     name_tabell <- choose_name(name, products)
->>>>>>> 84dec6b69ef1afd5238ec2daf4fd17113f770029
+
     
     pris_tabell <- choose_price(pris_max, pris_min, name_tabell)
     validate(
@@ -304,15 +315,13 @@ server <- function(input, output){
       need(!is.null(fits_tabell)|| input$fits=='', 'Ingen varer som passer til dette innenfor filtreringen. Vennligst prøv igjen eller la boksen stå tom.')
       )
     
-<<<<<<< HEAD
+
    
       country_tabell <- choose_country(land, type_tabell)
       fits_tabell <- choose_fits(passertil, country_tabell)
       
       return(fits_tabell)
-=======
-    return(fits_tabell)
->>>>>>> 84dec6b69ef1afd5238ec2daf4fd17113f770029
+
   }
   
   )
@@ -343,3 +352,4 @@ server <- function(input, output){
 
 #create shiny object
 shinyApp(ui, server) 
+}
