@@ -288,6 +288,8 @@ library(shinythemes)
 library(shinyalert)
 library(shinyjs)
 library(shinyBS)
+library(shinyFeedback)
+library(tcltk2)
 
 ui <- fluidPage(
   theme = shinytheme("cerulean"),
@@ -362,9 +364,14 @@ server <- function(input, output){
     passertil <- input$passertil
     
     
+    
     name_tabell <- choose_name(name, products)
     pris_tabell <- choose_price(pris_max, pris_min, name_tabell)
-    type_tabell <- choose_type(type, pris_tabell)
+   
+  
+  req(!(type%in%pris_tabell))
+
+  type_tabell <- choose_type(type, pris_tabell)
     
 #    if type %in% pris_tabell{
 #      type_tabell <- choose_type(type, pris_tabell)
@@ -392,6 +399,7 @@ server <- function(input, output){
 #      }
 #    })
     
+   
       country_tabell <- choose_country(land, type_tabell)
       fits_tabell <- choose_fits(passertil, country_tabell)
       
