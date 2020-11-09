@@ -157,6 +157,9 @@ choose_fits <- function(fits, tabell){
       print(paste("Vi fant ", nrow(rad), "drikkevarer som passer til", fits))
       return (tabell_fits)
     }
+    else{
+      return(NULL)
+    }
     
   }
 }
@@ -259,19 +262,26 @@ server <- function(input, output){
     land <- input$land
     
     name_tabell <- choose_name(name, products)
+    
     pris_tabell <- choose_price(pris_max, pris_min, name_tabell)
-    type_tabell <- choose_type(type, pris_tabell)
-    country_tabell <- choose_country(land, type_tabell)
-    fits_tabell <- choose_fits(passertil, country_tabell)
-    
-    
     validate(
-      need(!is.null(pris_tabell), 'Prisklassen er ikke gyldig med den filtrerte drikkevarenavnet. Vennligst prøv igjen.') %then%
-        need(!is.null(country_tabell) || input$land=='Ingen preferanser', 'Prisklassen er ikke gyldig med den filtrerte drikkevarenavnet. Vennligst prøv igjen.')%then%
-        need(!is.null(type_tabell) || input$type=='', 'Varetypen finnes ikke innenfor den gitte prisklassen og med det gitte navnet. Vennligst prøv igjen eller la boksen stå tom.') %then%
-        need(!is.null(fits_tabell)|| input$passertil=='', 'Ingen varer som passer til ønsket mat innefor de gitte filtreringene. Vennligst prøv igjen eller la boksen stå tom.')
-      )
-
+      need(!is.null(pris_tabell), 'Prisklassen er ikke gyldig med den filtrerte drikkevarenavnet. Vennligst prøv igjen.')
+    )
+    
+    type_tabell <- choose_type(type, pris_tabell)
+    validate(
+      need(!is.null(type_tabell), 'Varetypen finnes ikke innenfor den gitte prisklassen og med det gitte navnet. Vennligst prøv igjen eller la boksen stå tom.')
+    )
+    
+    country_tabell <- choose_country(land, type_tabell)
+    validate(
+      need(!is.null(country_tabell), 'Ingen varer fra dette landet innenfor de gitte filtreringene. Vennligst forsøk igjen.')
+    )
+    
+    fits_tabell <- choose_fits(passertil, country_tabell)
+    validate(
+      need(!is.null(fits_tabell), 'Ingen varer som passer til ønsket mat innefor de gitte filtreringene. Vennligst prøv igjen eller la boksen stå tom.')
+    )
     
     return(fits_tabell)
     
@@ -280,6 +290,7 @@ server <- function(input, output){
   
   #OUTPUT TABLE
   output$vin_table <- renderDataTable({
+    
     #SJEKKER OM NAVN OG TYPE FINNES I VINMONOPOLET GENERELT
     name_l <- tolower(input$name)
     Varenavn <- tolower(products$Varenavn)
