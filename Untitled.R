@@ -8,6 +8,7 @@ library(tidyverse)
 library(dplyr) #rename
 library(shiny)#filter name function
 library(stringr)
+library(anytime)
 #----------------------------------------------------------------------------------------------------------------------
 #Since the data at vinmonopolet is changing everyday, we use the data.table library and the fread()-function 
  #found this from https://www.r-bloggers.com/2015/03/getting-data-from-an-online-source/
@@ -122,7 +123,7 @@ choose_country <- function(country, tabell){
   country <- tolower(country)
   land <- tolower(tabell$Land)
   
-  if(country=="ingen preferanser"){
+  if(country=="Ingen preferanser"){
     return(tabell)
   }
   else if (country %in% land){
@@ -141,15 +142,14 @@ choose_country <- function(country, tabell){
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 #PASSER TIL FUNKSJON
 choose_fits <- function(fits, tabell){
-  one_word<-fits
-
-  
   passertil <- tolower(tabell$Passertil)
   
-  rad <- tabell[grep(fits[1], tabell$Passertil,ignore.case = TRUE, value = F), ]
+  rad <- tabell[grep(fits, tabell$Passertil,ignore.case = TRUE, value = F), ]
   
-  
-  
+  #if(fits==""){
+  #  return(tabell)
+  #}
+
   if(length(fits)==0){
     return(tabell)
   }
@@ -164,13 +164,10 @@ choose_fits <- function(fits, tabell){
     if (nrow(rad) != 0){
       tabell_fits <- data.frame(rad$Varenavn, rad$Varetype, rad$Land, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
       names(tabell_fits) <- substring(names(tabell_fits),5) #removing the "rad." part of every colname
-      print(paste("Vi fant ", nrow(rad), "drikkevarer som passer til", one_word))
+      print(paste("Vi fant ", nrow(rad), "drikkevarer som passer til", fits))
       return (tabell_fits)
     }
     
-    else{
-      return (NULL)
-    }
   }
 }
 choose_fits(fits,tabell)
@@ -187,7 +184,7 @@ library(shinyFeedback)
 library(tcltk2)
 
 #Lage en vektor av alle unike ord i passertil-kolonnen
-fjern<-c("lyst", "kjøtt", "")
+fjern<-c("lyst", "kjøtt",)
 vektor_passer<- products %>% pull(Passertil) %>% strsplit(" ") %>% unlist %>% unique() 
 vektor_passer<-append(vektor_passer[!vektor_passer%in%fjern],"lyst kjøtt")
 
@@ -197,9 +194,10 @@ vektor_passer<-append(vektor_passer[!vektor_passer%in%fjern],"lyst kjøtt")
 '%then%' <- shiny:::'%OR%'
 
 
-#if (interactive()) { Denne if statementen fant jeg på nettet, ser ikke ut som den gjør noe forskjell
+#if (interactive()) { #Denne if statementen fant jeg på nettet, ser ikke ut som den gjør noe forskjell
 #https://shiny.rstudio.com/reference/shiny/0.14/checkboxGroupInput.html?fbclid=IwAR3aICmOX4h3P0sDOzzYcw40KMyR1dzwBYVp7GD3zd-DcY49-w4oESoYHco
 ui <- fluidPage(
+  shinyjs::useShinyjs(),
   theme = shinytheme("cerulean"),
   
   ################Header panel###################################################
@@ -232,14 +230,32 @@ ui <- fluidPage(
       label = "Hvor skal drikkevaren være fra?:", "",
       choices = c("Ingen preferanser", products$Land),
     ), 
-    checkboxGroupInput(
-      inputId = "passertil", 
-      label = "Hva vil du at drikkevaren skal passe til?",
+    
+    #actionButton(
+     # inputId = "filtrer_mat",
+    #  label = "Check hvis du vil filtrere på mat"), hidden(
+     #   checkboxGroupInput(
+     #     inputId = "passertil", 
+     #     label = "Hva vil du at drikkevaren skal passe til?",
+     #     choices= c("Ingen preferanse"= "",vektor_passer),
+     #     selected = c("Ingen preferanse"="")
+      #)
+   # ),
+    
+   #checkboxInput("Passertil_filtrer","Kryss av hvis du vil filtrere på hva drikken passer til",value=FALSE),
+   
+   
+   
+   checkboxGroupInput(
+      inputId = "passertil", label="Hva vil du drikken skal passe til", 
+      #choices=c("ingen preferanser"="",vektor_passer),
+      #selected =c("ingen preferanser"="")
       choices=vektor_passer
+    
+      
     ),
+   
 
-
-  
     actionButton(
       inputId = "full_f",
       label = "Ferdig"
@@ -259,16 +275,30 @@ ui <- fluidPage(
 
 
 #Define server function - logic required to do the output
-server <- function(input, output){
+server <- function(input, output,session){
+
+
 
 #Full function
+  #observeEvent(input$Passertil_filtrer{
+    #updateCheckboxGroupInput(session,"passertil",choices=vektor_passer)
+  #})
+
+   
   mypar <- eventReactive(input$full_f, {
+   if (is.null(input$passertil)) {passertil <- ""}
+    else{
+    passertil<-input$passertil
+   }
     name <- input$name
     pris_max <- as.numeric(input$pris[2])
     pris_min <- as.numeric(input$pris[1])
     type <- input$type
+    #passertil<-input$passertil
     land <- input$land
-    passertil <- input$passertil
+   
+    
+    
     
 
     name_tabell <- choose_name(name, products)
@@ -277,14 +307,20 @@ server <- function(input, output){
     country_tabell <- choose_country(land, type_tabell)
     fits_tabell <- choose_fits(passertil, country_tabell)
     
+    
     validate(
       need(!is.null(pris_tabell), 'Prisklassen er ikke gyldig med den filtrerte drikkevarenavnet. Vennligst prøv igjen.') %then%
+        #need(!is.null(country_tabell) || input$land=='Ingen preferanser', 'Prisklassen er ikke gyldig med den filtrerte drikkevarenavnet. Vennligst prøv igjen.')%then%
         need(!is.null(type_tabell) || input$type=='', 'Varetypen finnes ikke innenfor den gitte prisklassen og med det gitte navnet. Vennligst prøv igjen eller la boksen stå tom.') %then%
-        need(!is.null(fits_tabell)|| input$fits=='', 'Ingen varer som passer til ønsket mat innefor de gitte filtreringene. Vennligst prøv igjen eller la boksen stå tom.')
-    )
+        need(!is.null(fits_tabell)|| input$passertil=='', 'Ingen varer som passer til ønsket mat innefor de gitte filtreringene. Vennligst prøv igjen eller la boksen stå tom.'))
+        
     
-return(fits_tabell)
+
+    
+   
   
+    
+ return(fits_tabell)
   })
 
 
@@ -312,7 +348,9 @@ return(fits_tabell)
     
     mypar()
     })
-}
+ 
+  }
+
 
 #create shiny object
 shinyApp(ui, server) 
