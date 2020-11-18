@@ -170,7 +170,11 @@ library(shinythemes)
 library(shinyjs)
 library(shinyBS)
 library(shinyFeedback)
+<<<<<<< HEAD:app.R
 library(rsconnect)
+=======
+#library(tcltk2)
+>>>>>>> ebf7d40e028eaa7108b8e6c74174e2b0f75fc2a2:Untitled.R
 
 #Lage en vektor av alle unike ord i passertil-kolonnen
 fjern <-c("lyst", "kjøtt", "")
@@ -179,6 +183,13 @@ vektor_passer <-append(vektor_passer[!vektor_passer%in%fjern],"lyst kjøtt")
 
 '%then%' <- shiny:::'%OR%'
 
+<<<<<<< HEAD:app.R
+=======
+
+#if (interactive()) { #Denne if statementen fant jeg på nettet, ser ikke ut som den gjør noe forskjell
+#https://shiny.rstudio.com/reference/shiny/0.14/checkboxGroupInput.html?fbclid=IwAR3aICmOX4h3P0sDOzzYcw40KMyR1dzwBYVp7GD3zd-DcY49-w4oESoYHco
+
+>>>>>>> ebf7d40e028eaa7108b8e6c74174e2b0f75fc2a2:Untitled.R
 ui <- fluidPage(
   shinyjs::useShinyjs(),
   theme = shinytheme("cerulean"),
@@ -249,6 +260,14 @@ server <- function(input, output){
     else{
       passertil<-input$passertil
     }
+      
+   if (is.null(input$passertil)) {
+     passertil <- ("")
+   }
+      
+  else{
+    passertil<-input$passertil
+    }
     
     name <- input$name
     pris_max <- as.numeric(input$pris[2])
@@ -264,6 +283,7 @@ server <- function(input, output){
     )
     
     type_tabell <- choose_type(type, pris_tabell)
+    
     shiny::validate(
       need(!is.null(type_tabell), 'Varetypen finnes ikke innenfor den gitte prisklassen og med det gitte navnet. Vennligst prøv igjen eller la boksen stå tom.')
     )
@@ -281,8 +301,8 @@ server <- function(input, output){
     return(fits_tabell)
     
   })
-  
-  
+    
+    
   #OUTPUT TABLE
   output$vin_table <- renderDataTable({
     
@@ -301,12 +321,11 @@ server <- function(input, output){
     )
     
     mypar()
+    
   })
+  
 }
 
 
 #create shiny object
 shinyApp(ui, server)
-
-
-
