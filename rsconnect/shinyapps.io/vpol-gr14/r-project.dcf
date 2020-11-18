@@ -1,0 +1,10 @@
+name: r-project
+title:
+username:
+account: vpol-gr14
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3258091
+bundleId: 3876245
+url: https://vpol-gr14.shinyapps.io/r-project/
+when: 1605710294.97787

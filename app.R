@@ -154,7 +154,6 @@ choose_fits <- function(fits, tabell){
     if (nrow(rad) != 0){
       tabell_fits <- data.frame(rad$Varenavn, rad$Varetype, rad$Land, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
       names(tabell_fits) <- substring(names(tabell_fits),5) #removing the "rad." part of every colname
-      print(paste("Vi fant ", nrow(rad), "drikkevarer som passer til", fits))
       return (tabell_fits)
     }
     else{
@@ -171,7 +170,7 @@ library(shinythemes)
 library(shinyjs)
 library(shinyBS)
 library(shinyFeedback)
-#library(tcltk2)
+library(rsconnect)
 
 #Lage en vektor av alle unike ord i passertil-kolonnen
 fjern <-c("lyst", "kjøtt", "")
@@ -179,10 +178,6 @@ vektor_passer <- products %>% pull(Passertil) %>% strsplit(" ") %>% unlist %>% u
 vektor_passer <-append(vektor_passer[!vektor_passer%in%fjern],"lyst kjøtt")
 
 '%then%' <- shiny:::'%OR%'
-
-
-#if (interactive()) { #Denne if statementen fant jeg på nettet, ser ikke ut som den gjør noe forskjell
-#https://shiny.rstudio.com/reference/shiny/0.14/checkboxGroupInput.html?fbclid=IwAR3aICmOX4h3P0sDOzzYcw40KMyR1dzwBYVp7GD3zd-DcY49-w4oESoYHco
 
 ui <- fluidPage(
   shinyjs::useShinyjs(),
@@ -248,11 +243,11 @@ server <- function(input, output){
   
   mypar <- eventReactive(input$full_f, {
     
-   if (is.null(input$passertil)) {
-     passertil <- ("")
-     }
-  else{
-    passertil<-input$passertil
+    if (is.null(input$passertil)) {
+      passertil <- ("")
+    }
+    else{
+      passertil<-input$passertil
     }
     
     name <- input$name
@@ -264,29 +259,29 @@ server <- function(input, output){
     name_tabell <- choose_name(name, products)
     
     pris_tabell <- choose_price(pris_max, pris_min, name_tabell)
-    validate(
+    shiny::validate(
       need(!is.null(pris_tabell), 'Prisklassen er ikke gyldig med den filtrerte drikkevarenavnet. Vennligst prøv igjen.')
     )
     
     type_tabell <- choose_type(type, pris_tabell)
-    validate(
+    shiny::validate(
       need(!is.null(type_tabell), 'Varetypen finnes ikke innenfor den gitte prisklassen og med det gitte navnet. Vennligst prøv igjen eller la boksen stå tom.')
     )
     
     country_tabell <- choose_country(land, type_tabell)
-    validate(
+    shiny::validate(
       need(!is.null(country_tabell), 'Ingen varer fra dette landet innenfor de gitte filtreringene. Vennligst forsøk igjen.')
     )
     
     fits_tabell <- choose_fits(passertil, country_tabell)
-    validate(
+    shiny::validate(
       need(!is.null(fits_tabell), 'Ingen varer som passer til ønsket mat innefor de gitte filtreringene. Vennligst prøv igjen eller la boksen stå tom.')
     )
     
     return(fits_tabell)
     
   })
-
+  
   
   #OUTPUT TABLE
   output$vin_table <- renderDataTable({
@@ -300,17 +295,18 @@ server <- function(input, output){
     Varetype <- tolower(products$Varetype)
     rad_type <- products[grep(type_l, products$Varetype,ignore.case = TRUE, value = F), ]
     
-    validate(
+    shiny::validate(
       need(nrow(rad_name)!=0 || input$name=='', 'Varenavnet finnes ikke i vinmonolopoets lager. Vennligst prøv igjen eller la boksen stå tom.') %then%
         need(nrow(rad_type)!=0 || input$type=='', 'Varetypen finnes ikke i vinmonolopoets lager. Vennligst prøv igjen eller la boksen stå tom.') 
     )
     
     mypar()
   })
-  
 }
 
 
 #create shiny object
 shinyApp(ui, server)
+
+
 
