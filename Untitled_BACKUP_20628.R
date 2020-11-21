@@ -1,0 +1,323 @@
+#Vinmonopolet data
+library(httr)
+library(jsonlite)
+library(data.table)
+library(bit64)
+library(docstring) #HUSK Å BRUKE DENNE TIL Å FORKLARE FEKS EN FUNKSJON
+library(tidyverse)
+library(dplyr) #rename
+library(shiny)#filter name function
+library(stringr)
+#----------------------------------------------------------------------------------------------------------------------
+#Since the data at vinmonopolet is changing everyday, we use the data.table library and the fread()-function 
+ #found this from https://www.r-bloggers.com/2015/03/getting-data-from-an-online-source/
+produkter <- fread('https://www.vinmonopolet.no/medias/sys_master/products/products/hbc/hb0/8834253127710/produkter.csv')
+is.data.frame(produkter)
+
+
+products <- produkter %>% 
+  select(-HovedGTIN,-Miljosmart_emballasje, -Gluten_lav_pa, -AndreGTINs) %>% 
+  filter(Alkohol!="0,00") %>%
+  unite('Passertil', Passertil01,Passertil02,Passertil03, sep = " ", remove=F ) %>% #Legger sammen passertil kolonnene
+  mutate(Datotid= anytime(Datotid)) %>% #for å få finere tid-format
+  mutate(Pris= as.numeric(gsub(",",".",Pris)))# %>%  #changing the separator , to . and making numeric
+
+#----------------------------------------------------------------------------------------------------------------------
+#NAME FUNKSJON 
+
+choose_name <-function(name, tabell){
+  name<-tolower(name) #for at ikke outputen "vi fant ..... drikkervarer som inneholdt..." skal bli gjentatt flere ganger hvis brukeren skriver fler enn 1 ord
+  list_name <- tolower(as.list(scan(text=name, what = ","))) #Småbokstaver og lager til liste
+  Varenavn <- tolower(tabell$Varenavn)
+  
+  rad <- tabell[grep(list_name[1], tabell$Varenavn,ignore.case = TRUE, value = F), ]
+  # et datasett hvor inputen og datasettet matcher
+  
+  
+  if (length(list_name)==0){
+    return(tabell)
+  }
+  else {
+    for (i in 1:length(list_name)){
+      rad[grep(list_name[i], rad$Varenavn,ignore.case = TRUE, value = F), ]
+    }
+    
+    
+    if (nrow(rad)>0){   #hvis rad-datasettet har et innhold, altså antall rader større enn 0
+      tabell_name <- data.frame(rad$Varenavn, rad$Varetype, rad$Land, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
+      names(tabell_name) <- substring(names(tabell_name),5) #removing the "rad." part of every colname
+      print(paste("Vi fant: ", nrow(tabell_name), "drikkevare(r) som inneholdt", name, "."))
+      return(tabell_name)
+    }
+    
+    else {
+      return(NULL)
+    }
+  }
+} 
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------
+#PRIS FUNKSJON
+#Lager min- og makspris for å gi brukeren et interval for pris
+min_price <- round(min(products$Pris))#rounded minimum price 
+max_price <- round(max(products$Pris))#rounded maximum price
+
+choose_price <- function(pris_max, pris_min, tabell){
+  
+  pris_max_n <- as.numeric(pris_max)
+  pris_min_n <- as.numeric(pris_min)
+
+  rad <- tabell %>% filter(Pris <= pris_max_n, Pris >= pris_min_n)
+
+  
+  #If they have a upper and lower limit, filter within these:
+  if (nrow(rad) != 0) {
+    
+    pris_tabell <- data.frame(rad$Varenavn, rad$Varetype, rad$Land, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl) 
+    names(pris_tabell) <- substring(names(pris_tabell),5)
+    
+    return(pris_tabell)
+  }
+  
+  else {
+    return(NULL)
+  }
+  
+} 
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------
+#VARETYPE FUNKSJON
+choose_type <- function(type, tabell){
+  #Make it case insensitive:
+  type <- tolower(type)
+  Varetype <- tolower(tabell$Varetype)
+  rad <- tabell[grep(type, tabell$Varetype,ignore.case = TRUE, value = F), ]
+  
+  if(type==""){
+    return(tabell)
+  }
+  else if (nrow(rad)!=0){
+    rad <- tabell[grep(type, tabell$Varetype,ignore.case = TRUE, value = F), ]
+    tabell_type <- data.frame(rad$Varenavn, rad$Varetype, rad$Land, rad$Volum, rad$Pris, rad$Passertil,rad$Vareurl)
+    names(tabell_type) <- substring(names(tabell_type),5)
+    print(paste("Vi fant: ", nrow(rad), "drikkevarer av denne typen"))
+    return (tabell_type)
+  } 
+  else {
+    return(NULL)
+    }
+    
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------
+#LAND FUNKSJON
+choose_country <- function(country, tabell){
+  #Make it case insensitive:
+  country <- tolower(country)
+  land <- tolower(tabell$Land)
+  
+  if(country=="ingen preferanser"){
+    return(tabell)
+  }
+  else if (country %in% land){
+    rad <- tabell[grep(country, tabell$Land, ignore.case = TRUE, value = F), ]
+    tabell_country <- data.frame(rad$Varenavn, rad$Varetype, rad$Land, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
+    names(tabell_country) <- substring(names(tabell_country),5)
+    print(paste("Vi fant: ", nrow(rad), " drikkevarer fra ", country))
+    return (tabell_country)
+  } 
+  
+  else {
+    return(NULL)
+  }
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------
+#PASSER TIL FUNKSJON
+choose_fits <- function(fits, tabell){
+  #Make it case insensitive:
+  fits<-gsub(",", "", fits)
+  one_word<-fits
+  fits <- tolower(as.list(scan(text=fits, what = ""))) #Småbokstaver og lager til liste
+  fits <- fits[fits != "og"]  #fjerner ordene som ikke skal med:
+  fits <- fits[fits != "and"] #fjerner ordene som ikke skal med:
+  
+  
+  passertil <- tolower(tabell$Passertil)
+  
+  rad <- tabell[grep(fits[1], tabell$Passertil,ignore.case = TRUE, value = F), ]
+  
+  if(length(fits)==0){
+    return(tabell)
+  }
+
+  else {
+    for (i in 1:length(fits)){
+      rad[grep(fits[i], rad$Passertil,ignore.case = TRUE, value = F), ]
+    }
+  
+    #hvis det er rader igjen etter filtreringen: 
+    if (nrow(rad) != 0){
+      tabell_fits <- data.frame(rad$Varenavn, rad$Varetype, rad$Land, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
+      names(tabell_fits) <- substring(names(tabell_fits),5) #removing the "rad." part of every colname
+      print(paste("Vi fant ", nrow(rad), "drikkevarer som passer til", one_word))
+      return (tabell_fits)
+    }
+    
+    else{
+      return (NULL)
+    }
+  }
+}
+
+#----------------------------------------------------------------------------------------------------------------------------------
+#SHINY APP
+#Define UI
+library(shinythemes)
+<<<<<<< HEAD
+library(shinyalert)
+library(shinyjs)
+library(shinyBS)
+library(shinyFeedback)
+library(tcltk2)
+=======
+
+'%then%' <- shiny:::'%OR%'
+>>>>>>> 84dec6b69ef1afd5238ec2daf4fd17113f770029
+
+ui <- fluidPage(
+  theme = shinytheme("cerulean"),
+  
+  ################Header panel###################################################
+  headerPanel("Vinmonopolets app"),
+  
+  ################Sidebar panel##################################################
+  sidebarPanel(
+    tags$h3("Filtrer under:"),
+    
+    textInput(
+      inputId = "name", #name will be sent to the server
+      label = "Navn på alkoholen:", "",
+    ), 
+    
+    sliderInput(
+      inputId = "pris", 
+      label = "Prisintervall: ",
+      min = min_price,
+      max = max_price,
+      value = c(min, max),
+    ),
+ 
+    textInput(
+      inputId = "type", #name will be sent to the server
+      label = "Type alkohol:", ""
+    ), 
+    
+    selectInput(
+      inputId = "land", #name will be sent to the server
+      label = "Hvor skal drikkevaren være fra?:", "",
+      choices = c("Ingen preferanser", products$Land),
+    ), 
+    
+    textInput(
+      inputId = "passertil",
+      label = "Hva vil du drikkevaren skal passe til: ", "",
+    ),
+  
+    actionButton(
+      inputId = "full_f",
+      label = "Ferdig"
+    )
+  ),
+  
+##################Main panel ###################################################
+#Displaying outputs
+  mainPanel(
+    h1("Liste over alkohol"),
+    dataTableOutput("vin_table")
+  )
+)
+
+#Define server function - logic required to do the output
+server <- function(input, output){
+
+#Full function
+  mypar <- eventReactive(input$full_f, {
+    name <- input$name
+    pris_max <- as.numeric(input$pris[2])
+    pris_min <- as.numeric(input$pris[1])
+    type <- input$type
+    land <- input$land
+    passertil <- input$passertil
+    
+<<<<<<< HEAD
+    
+    
+    name_tabell <- choose_name(name, products)
+    pris_tabell <- choose_price(pris_max, pris_min, name_tabell)
+   
+  
+  req(!(type%in%pris_tabell))
+
+  type_tabell <- choose_type(type, pris_tabell)
+    
+#    if type %in% pris_tabell{
+#      type_tabell <- choose_type(type, pris_tabell)
+#    }
+#    else 
+#      ALERT
+=======
+    name_tabell <- choose_name(name, products)
+>>>>>>> 84dec6b69ef1afd5238ec2daf4fd17113f770029
+    
+    pris_tabell <- choose_price(pris_max, pris_min, name_tabell)
+    type_tabell <- choose_type(type, pris_tabell)
+    country_tabell <- choose_country(land, type_tabell)
+    fits_tabell <- choose_fits(passertil, country_tabell)
+    
+    validate(
+      need(!is.null(pris_tabell), 'Prisklassen er ikke gyldig med den filtrerte drikkevare navnet. Vennligst prøv igjen.') %then%
+        need(!is.null(type_tabell) || input$type=='', 'Varetypen finnes ikke innenfor den gitte prisklassen og med det gitte navnet. Vennligst prøv igjen eller la boksen stå tom.') %then%
+        need(!is.null(fits_tabell)|| input$fits=='', 'Ingen varer som passer til ønsket mat innefor de gitte filtreringene. Vennligst prøv igjen eller la boksen stå tom.')
+    )
+    
+<<<<<<< HEAD
+   
+      country_tabell <- choose_country(land, type_tabell)
+      fits_tabell <- choose_fits(passertil, country_tabell)
+      
+      return(fits_tabell)
+=======
+    return(fits_tabell)
+<<<<<<< HEAD
+>>>>>>> 84dec6b69ef1afd5238ec2daf4fd17113f770029
+  }
+  
+  )
+=======
+  })
+>>>>>>> 25d7ab4cc16d32569c105e1d0385c217c4315335
+  
+  #OUTPUT TABLE
+  output$vin_table <- renderDataTable({
+    
+    #SJEKKER OM NAVN OG TYPE FINNES I VINMONOPOLET GENERELT
+    name_l <- tolower(input$name)
+    Varenavn <- tolower(products$Varenavn)
+    rad_name <- products[grep(name_l, products$Varenavn,ignore.case = TRUE, value = F), ]
+    
+    type_l <- tolower(input$type)
+    Varetype <- tolower(products$Varetype)
+    rad_type <- products[grep(type_l, products$Varetype,ignore.case = TRUE, value = F), ]
+    
+    validate(
+      need(nrow(rad_name)!=0 || input$name=='', 'Varenavnet finnes ikke i vinmonolopoets lager. Vennligst prøv igjen eller la boksen stå tom.') %then%
+        need(nrow(rad_type)!=0 || input$type=='', 'Varetypen finnes ikke i vinmonolopoets lager. Vennligst prøv igjen eller la boksen stå tom.') 
+    )
+    
+    mypar()
+    })
+}
+
+#create shiny object
+shinyApp(ui, server) 
