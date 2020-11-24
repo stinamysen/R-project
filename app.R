@@ -3,7 +3,6 @@ library(httr)
 library(jsonlite)
 library(data.table)
 library(bit64)
-library(docstring) #Denne kan kanskje slettes? 
 library(tidyverse)
 library(dplyr)
 library(shiny)
@@ -42,7 +41,7 @@ products <- produkter %>%
 # if it finds a match, it will create and return a data table and store the matched row with the following columns:
 # "Varenavn", "Varetype", "Land", "Volum", "Pris", "Passertil", "Vareurl"
 # if it doesn't find any matches with the user input, it will not return anything.
-# if the table, after the new filtering, ends up having no matches, it will return the old table before the newest filtering.
+# if the table, after the new filtering, ends up having no matches, the user will get a message saying that there is no matches to this filtering
 
 #-----------------------------------------------------------------------------------------------------------------------
 #Name-function
@@ -54,27 +53,27 @@ choose_name <-function(name, tabell){
   
   rad <- tabell[grep(list_name[1], tabell$Varenavn,ignore.case = TRUE, value = F), ]
   
-  if (length(list_name)==0){
-    return(tabell)
+  if (length(list_name)==0){  #if the user does not filter on the name of the liqour
+    return(tabell)            #the function will return the whole table
   }
   else {
-    for (i in 1:length(list_name)){
-      rad[grep(list_name[i], rad$Varenavn,ignore.case = TRUE, value = F), ]
+    for (i in 1:length(list_name)){                                        #looping through all of the character-vectors, , 
+      rad[grep(list_name[i], rad$Varenavn,ignore.case = TRUE, value = F), ]#ends up with the rows which contains these words, regardless of the order of the input words
     }
     
     if (nrow(rad)>0){
       tabell_name <- data.frame(rad$Varenavn, rad$Varetype, rad$Land, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
       names(tabell_name) <- substring(names(tabell_name),5) #removing the "rad." part of every colname
-      return(tabell_name)
+      return(tabell_name) #returning the filtered table if the dataset finds any matches
     }
     
     else {
-      return(NULL)
+      return(NULL)       #When the the input does not match any name of the liqours
     }
   }
 } 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#PRIS FUNKSJON
+#PRIS-FUNKSJON
 # We create variables for the minimum- and maximum price so that the user knows which range he/she can choose to filter on. 
 min_price <- round(min(products$Pris))#rounded minimum price 
 max_price <- round(max(products$Pris))#rounded maximum price
@@ -107,8 +106,8 @@ choose_type <- function(type, tabell){
   #Make it case insensitive:
   type <- tolower(type)
   Varetype <- tolower(tabell$Varetype)
-  rad <- tabell[grep(type, tabell$Varetype,ignore.case = TRUE, value = F), ]
-  
+  rad <- tabell[grep(type, tabell$Varetype,ignore.case = TRUE, value = F), ] #using the grep function to see which rows that matches
+                                                                             #the input in the Varetype column
   if(type == ""){
     return(tabell)
   }
@@ -133,7 +132,7 @@ choose_country <- function(country, tabell){
   country <- tolower(country)
   land <- tolower(tabell$Land)
   
-  rad <- tabell[grep(country, tabell$Land, ignore.case = TRUE, value = F), ]
+  rad <- tabell[grep(country, tabell$Land, ignore.case = TRUE, value = F), ] 
   
   if(country=="ingen preferanser"){
     return(tabell) # the pull down-menu for countries contains and option to choose "ingen preferanser" and thus, it will return the old table without any filtering on country
@@ -191,7 +190,7 @@ fjern <-c("lyst", "kjøtt", "")
 vektor_passer <- products %>% pull(Passertil) %>% strsplit(" ") %>% unlist %>% unique() 
 vektor_passer <-append(vektor_passer[!vektor_passer%in%fjern],"lyst kjøtt")
 
-'%then%' <- shiny:::'%OR%' #BETTAN
+'%then%' <- shiny:::'%OR%' 
 
 
 #The UI-function is the function that will display the results to the user. This is what you'll see when running the app
@@ -237,8 +236,6 @@ ui <- fluidPage(
     
     checkboxGroupInput(
       inputId = "passertil", label="Hva vil du drikken skal passe til", 
-      #choices=c("ingen preferanser"="",vektor_passer),
-      #selected =c("ingen preferanser"="")
       choices = vektor_passer
     ),
     

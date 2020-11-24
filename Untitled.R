@@ -47,7 +47,6 @@ choose_name <-function(name, tabell){
     if (nrow(rad)>0){   #hvis rad-datasettet har et innhold, altså antall rader større enn 0
       tabell_name <- data.frame(rad$Varenavn, rad$Varetype, rad$Land, rad$Volum, rad$Pris, rad$Passertil, rad$Vareurl)
       names(tabell_name) <- substring(names(tabell_name),5) #removing the "rad." part of every colname
-      print(paste("Vi fant: ", nrow(tabell_name), "drikkevare(r) som inneholdt", name, "."))
       return(tabell_name)
     }
     
