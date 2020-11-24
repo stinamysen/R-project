@@ -44,7 +44,7 @@ products <- produkter %>%
 # if the table, after the new filtering, ends up having no matches, the user will get a message saying that there is no matches to this filtering
 
 #-----------------------------------------------------------------------------------------------------------------------
-#Name-function
+#Navn-funksjon
 choose_name <-function(name, tabell){
   #Make it case insensitive:
   name<-tolower(name)
@@ -100,7 +100,7 @@ choose_price <- function(pris_max, pris_min, tabell){
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Varetype-function
+#Varetype-funksjon
 
 choose_type <- function(type, tabell){
   #Make it case insensitive:
@@ -125,7 +125,7 @@ choose_type <- function(type, tabell){
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Land-function
+#Land-funksjon
 
 choose_country <- function(country, tabell){
   #Make it case insensitive:
@@ -150,7 +150,7 @@ choose_country <- function(country, tabell){
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
-#PASSER TIL FUNKSJON
+#PASSER-TIL-FUNKSJON
 choose_fits <- function(fits, tabell){
   #Make it case insensitive:
   passertil <- tolower(tabell$Passertil)
