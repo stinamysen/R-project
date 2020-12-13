@@ -338,6 +338,11 @@ server <- function(input, output){
 #create shiny object
 shinyApp(ui, server)
 
+#Such that anyone can use this app, we have made it available on the web. Here is the link:
+#https://vpol-gr14.shinyapps.io/r-project/?fbclid=IwAR1LxRAsJhcqCqX1tls3bnidpAZsJ46sCPLrSC-glt_3iZvipLxPFdQTH6Q
+
+
+
 
 
 
